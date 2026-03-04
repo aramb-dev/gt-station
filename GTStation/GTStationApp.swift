@@ -6,24 +6,25 @@ struct GTStationApp: App {
   @StateObject private var appState = AppState()
 
   var body: some Scene {
+    WindowGroup("GT Station", id: "dashboard") {
+      DashboardView()
+        .environmentObject(appState)
+        .frame(minWidth: 900, minHeight: 650)
+    }
+    .windowStyle(.titleBar)
+    .windowToolbarStyle(.unified)
+
     MenuBarExtra("GT Station", systemImage: "bolt.fill") {
       MenuBarView()
         .environmentObject(appState)
     }
     .menuBarExtraStyle(.window)
-
-    Window("GT Station Dashboard", id: "dashboard") {
-      DashboardView()
-        .environmentObject(appState)
-        .frame(minWidth: 800, minHeight: 600)
-    }
-    .windowStyle(.titleBar)
-    .windowToolbarStyle(.unified)
   }
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationDidFinishLaunching(_ notification: Notification) {
-    NSApp.setActivationPolicy(.accessory)
+    NSApp.setActivationPolicy(.regular)
+    NSApp.activate(ignoringOtherApps: true)
   }
 }
