@@ -7,12 +7,16 @@ struct NudgeMessage: Codable, Identifiable {
   let to: String
   let text: String
   let timestamp: Date
+  let mode: String
+  let priority: String
 
-  init(to: String, text: String) {
+  init(to: String, text: String, mode: String = "immediate", priority: String = "normal") {
     self.id = UUID()
     self.to = to
     self.text = text
     self.timestamp = Date()
+    self.mode = mode
+    self.priority = priority
   }
 }
 
@@ -222,6 +226,13 @@ struct ChatPanel: View {
   @State private var errorText: String? = nil
   @FocusState private var inputFocused: Bool
 
+  // Delivery options
+  @State private var mode: String = "immediate"
+  @State private var priority: String = "normal"
+  @State private var force: Bool = false
+  @State private var ifFresh: Bool = false
+  @State private var showOptions: Bool = false
+
   private var thread: [NudgeMessage] {
     history.messages(to: agent.id)
   }
@@ -316,8 +327,59 @@ struct ChatPanel: View {
 
       Divider()
 
+      // Options row (collapsed by default)
+      if showOptions {
+        HStack(spacing: 8) {
+          // Mode picker
+          Picker("", selection: $mode) {
+            Text("immediate").tag("immediate")
+            Text("queue").tag("queue")
+            Text("wait-idle").tag("wait-idle")
+          }
+          .pickerStyle(.segmented)
+          .frame(maxWidth: 240)
+
+          Divider().frame(height: 16)
+
+          // Priority
+          Picker("", selection: $priority) {
+            Text("normal").tag("normal")
+            Text("urgent").tag("urgent")
+          }
+          .pickerStyle(.segmented)
+          .frame(maxWidth: 130)
+
+          Divider().frame(height: 16)
+
+          // Toggles
+          Toggle("force", isOn: $force)
+            .toggleStyle(.checkbox)
+            .font(.caption)
+          Toggle("if-fresh", isOn: $ifFresh)
+            .toggleStyle(.checkbox)
+            .font(.caption)
+
+          Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .background(.secondary.opacity(0.04))
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+      }
+
       // Input bar
-      HStack(spacing: 10) {
+      HStack(spacing: 8) {
+        // Options toggle
+        Button {
+          withAnimation(.spring(duration: 0.2)) { showOptions.toggle() }
+        } label: {
+          Image(systemName: "slider.horizontal.3")
+            .font(.system(size: 16))
+            .foregroundColor(showOptions ? .blue : .secondary)
+        }
+        .buttonStyle(.plain)
+        .help("Delivery options")
+
         TextField("Nudge \(ContactStore.shared.resolveDisplayName(for: agent.id))…", text: $input, axis: .vertical)
           .textFieldStyle(.plain)
           .font(.body)
@@ -354,8 +416,8 @@ struct ChatPanel: View {
     // gt nudge rejects trailing slashes (e.g. "deacon/" → "deacon")
     let target = agent.id.hasSuffix("/") ? String(agent.id.dropLast()) : agent.id
     do {
-      _ = try await GTClient.shared.nudge(target, message: text)
-      history.append(NudgeMessage(to: agent.id, text: text))
+      _ = try await GTClient.shared.nudge(target, message: text, mode: mode, priority: priority, force: force, ifFresh: ifFresh)
+      history.append(NudgeMessage(to: agent.id, text: text, mode: mode, priority: priority))
     } catch {
       errorText = error.localizedDescription
       input = text // restore on failure
@@ -383,13 +445,29 @@ struct BubbleView: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.blue, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(bubbleColor, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .frame(maxWidth: 360, alignment: .trailing)
 
-      Text(timeString)
-        .font(.caption2)
-        .foregroundStyle(.tertiary)
-        .padding(.trailing, 4)
+      HStack(spacing: 4) {
+        if message.mode != "immediate" {
+          Text(message.mode)
+            .font(.caption2)
+            .foregroundStyle(.tertiary)
+        }
+        if message.priority == "urgent" {
+          Text("urgent")
+            .font(.caption2)
+            .foregroundStyle(.orange)
+        }
+        Text(timeString)
+          .font(.caption2)
+          .foregroundStyle(.tertiary)
+      }
+      .padding(.trailing, 4)
     }
+  }
+
+  private var bubbleColor: Color {
+    message.priority == "urgent" ? .orange : .blue
   }
 }

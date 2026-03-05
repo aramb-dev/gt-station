@@ -82,8 +82,20 @@ actor GTClient {
     try await run(["mail", "mark-read", id])
   }
 
-  func nudge(_ target: String, message: String) async throws -> String {
-    try await run(["nudge", target, message])
+  func nudge(
+    _ target: String,
+    message: String,
+    mode: String = "immediate",
+    priority: String = "normal",
+    force: Bool = false,
+    ifFresh: Bool = false
+  ) async throws -> String {
+    var args = ["nudge", target, "-m", message]
+    if mode != "immediate" { args += ["--mode", mode] }
+    if priority != "normal" { args += ["--priority", priority] }
+    if force { args.append("--force") }
+    if ifFresh { args.append("--if-fresh") }
+    return try await run(args)
   }
 
   func doltStart() async throws -> String {
