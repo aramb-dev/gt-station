@@ -19,6 +19,8 @@
 		AA0000000000000000000038 /* DoltHealthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000028 /* DoltHealthView.swift */; };
 		AA0000000000000000000039 /* QuickActionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000029 /* QuickActionsView.swift */; };
 		AA000000000000000000003C /* AddressCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000002E /* AddressCache.swift */; };
+		AA000000000000000000003D /* DoltClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000002F /* DoltClient.swift */; };
+		AA0000000000000000000042 /* MySQLNIO in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000041 /* MySQLNIO */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +33,7 @@
 		AA000000000000000000002C /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		AA000000000000000000002D /* RigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigsView.swift; sourceTree = "<group>"; };
 		AA000000000000000000002E /* AddressCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddressCache.swift; sourceTree = "<group>"; };
+		AA000000000000000000002F /* DoltClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoltClient.swift; sourceTree = "<group>"; };
 		AA0000000000000000000026 /* MailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000027 /* EscalationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EscalationsView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000028 /* DoltHealthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoltHealthView.swift; sourceTree = "<group>"; };
@@ -44,6 +47,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA0000000000000000000042 /* MySQLNIO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +75,7 @@
 			children = (
 				AA0000000000000000000020 /* GTStationApp.swift */,
 				AA0000000000000000000021 /* GTClient.swift */,
+				AA000000000000000000002F /* DoltClient.swift */,
 				AA0000000000000000000022 /* AppState.swift */,
 				AA0000000000000000000023 /* Shared.swift */,
 				AA0000000000000000000025 /* DashboardView.swift */,
@@ -103,6 +108,9 @@
 			dependencies = (
 			);
 			name = GTStation;
+			packageProductDependencies = (
+				AA0000000000000000000041 /* MySQLNIO */,
+			);
 			productName = GTStation;
 			productReference = AA0000000000000000000009 /* GTStation.app */;
 			productType = "com.apple.product-type.application";
@@ -131,6 +139,9 @@
 				Base,
 			);
 			mainGroup = AA0000000000000000000003 /* GTStation */;
+			packageReferences = (
+				AA0000000000000000000040 /* XCRemoteSwiftPackageReference "mysql-nio" */,
+			);
 			productRefGroup = AA0000000000000000000007 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -157,6 +168,7 @@
 			files = (
 				AA0000000000000000000030 /* GTStationApp.swift in Sources */,
 				AA0000000000000000000031 /* GTClient.swift in Sources */,
+				AA000000000000000000003D /* DoltClient.swift in Sources */,
 				AA0000000000000000000032 /* AppState.swift in Sources */,
 				AA0000000000000000000033 /* Shared.swift in Sources */,
 				AA0000000000000000000035 /* DashboardView.swift in Sources */,
@@ -358,6 +370,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AA0000000000000000000040 /* XCRemoteSwiftPackageReference "mysql-nio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/vapor/mysql-nio.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA0000000000000000000041 /* MySQLNIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA0000000000000000000040 /* XCRemoteSwiftPackageReference "mysql-nio" */;
+			productName = MySQLNIO;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 	};
 	rootObject = AA0000000000000000000001 /* Project object */;

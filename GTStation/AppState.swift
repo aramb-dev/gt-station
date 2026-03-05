@@ -20,6 +20,7 @@ class AppState: ObservableObject {
 
   private var refreshTimer: Timer?
   private let client = GTClient.shared
+  private let dolt = DoltClient.shared
 
   init() {
     requestNotificationPermission()
@@ -28,7 +29,7 @@ class AppState: ObservableObject {
   }
 
   func startPolling() {
-    refreshTimer = Timer.scheduledTimer(withTimeInterval: 8.0, repeats: true) { [weak self] _ in
+    refreshTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
       Task { @MainActor [weak self] in
         await self?.refresh()
       }
@@ -44,16 +45,25 @@ class AppState: ObservableObject {
     isLoading = true
     lastError = nil
 
+    // Use DoltClient for mail reads (direct SQL — fast)
+    // Use GTClient for everything else (CLI — still needed for non-mail data)
     async let statusTask = client.statusJSON()
     async let rigsTask = client.rigListJSON()
-    async let mailTask = client.mailInboxJSON(identity: "overseer")
+    async let mailTask: [MailItem] = {
+      do {
+        return try await dolt.fetchMail(identity: "overseer")
+      } catch {
+        // Fallback to CLI if Dolt connection fails
+        return (try? await client.mailInboxJSON(identity: "overseer")) ?? []
+      }
+    }()
     async let doltTask = client.doltStatus()
     async let polecatTask = client.polecatListJSON()
     async let convoyTask = client.convoyListJSON()
 
     townStatus = try? await statusTask
     rigs = (try? await rigsTask) ?? []
-    let newMail = (try? await mailTask) ?? []
+    let newMail = await mailTask
     doltStatusText = (try? await doltTask) ?? "Error fetching status"
     polecats = (try? await polecatTask) ?? []
     convoys = (try? await convoyTask) ?? []
