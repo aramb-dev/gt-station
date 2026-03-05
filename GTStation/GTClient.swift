@@ -34,22 +34,42 @@ actor GTClient {
     return String(data: outputData, encoding: .utf8) ?? ""
   }
 
-  func status() async throws -> String {
-    try await run(["status"])
+  // JSON-returning commands
+  func statusJSON() async throws -> TownStatus {
+    let raw = try await run(["status", "--json"])
+    return try JSONDecoder().decode(TownStatus.self, from: Data(raw.utf8))
   }
 
-  func rigList() async throws -> String {
-    try await run(["rig", "list"])
+  func rigListJSON() async throws -> [RigInfo] {
+    let raw = try await run(["rig", "list", "--json"])
+    return try JSONDecoder().decode([RigInfo].self, from: Data(raw.utf8))
   }
 
-  func mailInbox() async throws -> String {
-    try await run(["mail", "inbox"])
+  func mailInboxJSON() async throws -> [MailItem] {
+    let raw = try await run(["mail", "inbox", "--json", "-a"])
+    return try JSONDecoder().decode([MailItem].self, from: Data(raw.utf8))
+  }
+
+  func polecatListJSON() async throws -> [PolecatInfo] {
+    let raw = try await run(["polecat", "list", "--all", "--json"])
+    return try JSONDecoder().decode([PolecatInfo].self, from: Data(raw.utf8))
+  }
+
+  func convoyListJSON() async throws -> [ConvoyInfo] {
+    let raw = try await run(["convoy", "list", "--json"])
+    return try JSONDecoder().decode([ConvoyInfo].self, from: Data(raw.utf8))
+  }
+
+  // Text-returning commands (no JSON support)
+  func doltStatus() async throws -> String {
+    try await run(["dolt", "status"])
   }
 
   func mailRead(_ id: String) async throws -> String {
     try await run(["mail", "read", id])
   }
 
+  // Actions
   func mailSend(to recipient: String, subject: String, message: String) async throws -> String {
     try await run(["mail", "send", recipient, "-s", subject, "-m", message])
   }
@@ -58,20 +78,8 @@ actor GTClient {
     try await run(["mail", "mark-read", id])
   }
 
-  func escalateList() async throws -> String {
-    try await run(["escalate", "list"])
-  }
-
-  func escalateAck(_ id: String) async throws -> String {
-    try await run(["escalate", "ack", id])
-  }
-
-  func escalateClose(_ id: String) async throws -> String {
-    try await run(["escalate", "close", id])
-  }
-
-  func doltStatus() async throws -> String {
-    try await run(["dolt", "status"])
+  func nudge(_ target: String, message: String) async throws -> String {
+    try await run(["nudge", target, message])
   }
 
   func doltStart() async throws -> String {
@@ -86,16 +94,20 @@ actor GTClient {
     try await run(["dolt", "cleanup"])
   }
 
-  func polecatList() async throws -> String {
-    try await run(["polecat", "list"])
+  func rigStart(_ rig: String) async throws -> String {
+    try await run(["rig", "start", rig])
   }
 
-  func convoyList() async throws -> String {
-    try await run(["convoy", "list"])
+  func rigStop(_ rig: String) async throws -> String {
+    try await run(["rig", "stop", rig])
   }
 
-  func nudge(_ target: String, message: String) async throws -> String {
-    try await run(["nudge", target, message])
+  func rigDock(_ rig: String) async throws -> String {
+    try await run(["rig", "dock", rig])
+  }
+
+  func rigUndock(_ rig: String) async throws -> String {
+    try await run(["rig", "undock", rig])
   }
 }
 

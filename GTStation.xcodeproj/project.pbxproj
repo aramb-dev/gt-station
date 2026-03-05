@@ -11,8 +11,9 @@
 		AA0000000000000000000031 /* GTClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000021 /* GTClient.swift */; };
 		AA0000000000000000000032 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000022 /* AppState.swift */; };
 		AA0000000000000000000033 /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000023 /* Shared.swift */; };
-		AA0000000000000000000034 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000024 /* MenuBarView.swift */; };
 		AA0000000000000000000035 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000025 /* DashboardView.swift */; };
+		AA000000000000000000003A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000002C /* Models.swift */; };
+		AA000000000000000000003B /* RigsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000002D /* RigsView.swift */; };
 		AA0000000000000000000036 /* MailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000026 /* MailView.swift */; };
 		AA0000000000000000000037 /* EscalationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000027 /* EscalationsView.swift */; };
 		AA0000000000000000000038 /* DoltHealthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000028 /* DoltHealthView.swift */; };
@@ -25,8 +26,9 @@
 		AA0000000000000000000021 /* GTClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GTClient.swift; sourceTree = "<group>"; };
 		AA0000000000000000000022 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		AA0000000000000000000023 /* Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared.swift; sourceTree = "<group>"; };
-		AA0000000000000000000024 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000025 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		AA000000000000000000002C /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		AA000000000000000000002D /* RigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigsView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000026 /* MailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000027 /* EscalationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EscalationsView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000028 /* DoltHealthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoltHealthView.swift; sourceTree = "<group>"; };
@@ -69,8 +71,9 @@
 				AA0000000000000000000021 /* GTClient.swift */,
 				AA0000000000000000000022 /* AppState.swift */,
 				AA0000000000000000000023 /* Shared.swift */,
-				AA0000000000000000000024 /* MenuBarView.swift */,
 				AA0000000000000000000025 /* DashboardView.swift */,
+				AA000000000000000000002C /* Models.swift */,
+				AA000000000000000000002D /* RigsView.swift */,
 				AA0000000000000000000026 /* MailView.swift */,
 				AA0000000000000000000027 /* EscalationsView.swift */,
 				AA0000000000000000000028 /* DoltHealthView.swift */,
@@ -153,8 +156,9 @@
 				AA0000000000000000000031 /* GTClient.swift in Sources */,
 				AA0000000000000000000032 /* AppState.swift in Sources */,
 				AA0000000000000000000033 /* Shared.swift in Sources */,
-				AA0000000000000000000034 /* MenuBarView.swift in Sources */,
 				AA0000000000000000000035 /* DashboardView.swift in Sources */,
+				AA000000000000000000003A /* Models.swift in Sources */,
+				AA000000000000000000003B /* RigsView.swift in Sources */,
 				AA0000000000000000000036 /* MailView.swift in Sources */,
 				AA0000000000000000000037 /* EscalationsView.swift in Sources */,
 				AA0000000000000000000038 /* DoltHealthView.swift in Sources */,

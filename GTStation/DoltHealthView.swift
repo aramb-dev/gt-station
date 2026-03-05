@@ -8,45 +8,90 @@ struct DoltHealthView: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 16) {
-        Text("Dolt Health")
-          .font(.title2)
-          .bold()
-          .padding(.horizontal)
-
-        RawOutputCard(title: "Server Status", content: appState.doltStatus)
-          .padding(.horizontal)
-
-        HStack(spacing: 12) {
-          Button("Start") {
-            Task { await runAction("start") { try await GTClient.shared.doltStart() } }
+        HStack {
+          Text("Dolt Health")
+            .font(.title2)
+            .bold()
+          Spacer()
+          HStack(spacing: 4) {
+            Circle()
+              .fill(appState.isDoltRunning ? .green : .red)
+              .frame(width: 10, height: 10)
+            Text(appState.isDoltRunning ? "Running" : "Stopped")
+              .font(.callout)
+              .fontWeight(.medium)
           }
-          .buttonStyle(.bordered)
-
-          Button("Stop") {
-            Task { await runAction("stop") { try await GTClient.shared.doltStop() } }
-          }
-          .buttonStyle(.bordered)
-
-          Button("Cleanup") {
-            Task { await runAction("cleanup") { try await GTClient.shared.doltCleanup() } }
-          }
-          .buttonStyle(.bordered)
         }
         .padding(.horizontal)
-        .disabled(isRunningAction)
 
-        if let feedback {
-          ScrollView {
-            Text(feedback)
-              .font(.system(.body, design: .monospaced))
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .padding()
+        // Connection details
+        if let dolt = appState.townStatus?.dolt {
+          GroupBox("Connection") {
+            VStack(alignment: .leading, spacing: 6) {
+              if let pid = dolt.pid {
+                LabeledContent("PID", value: "\(pid)")
+              }
+              if let port = dolt.port {
+                LabeledContent("Port", value: "\(port)")
+              }
+              if let dir = dolt.data_dir {
+                LabeledContent("Data Dir", value: dir)
+              }
+            }
+            .font(.caption)
           }
-          .frame(maxHeight: 200)
-          .background(.secondary.opacity(0.1))
-          .clipShape(RoundedRectangle(cornerRadius: 8))
           .padding(.horizontal)
         }
+
+        // Raw status output
+        GroupBox("Server Status") {
+          ScrollView {
+            Text(appState.doltStatusText.isEmpty ? "(no output)" : appState.doltStatusText)
+              .font(.system(.caption, design: .monospaced))
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(8)
+              .textSelection(.enabled)
+          }
+          .frame(maxHeight: 200)
+        }
+        .padding(.horizontal)
+
+        // Actions
+        GroupBox("Actions") {
+          VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+              Button("Start Dolt") {
+                Task { await runAction("start") { try await GTClient.shared.doltStart() } }
+              }
+              .buttonStyle(.bordered)
+
+              Button("Stop Dolt") {
+                Task { await runAction("stop") { try await GTClient.shared.doltStop() } }
+              }
+              .buttonStyle(.bordered)
+
+              Button("Cleanup Orphans") {
+                Task { await runAction("cleanup") { try await GTClient.shared.doltCleanup() } }
+              }
+              .buttonStyle(.bordered)
+            }
+            .disabled(isRunningAction)
+
+            if let feedback {
+              ScrollView {
+                Text(feedback)
+                  .font(.system(.caption, design: .monospaced))
+                  .frame(maxWidth: .infinity, alignment: .leading)
+                  .padding(8)
+                  .textSelection(.enabled)
+              }
+              .frame(maxHeight: 150)
+              .background(.secondary.opacity(0.08))
+              .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+          }
+        }
+        .padding(.horizontal)
       }
       .padding(.vertical)
     }

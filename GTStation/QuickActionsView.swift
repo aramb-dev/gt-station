@@ -14,10 +14,11 @@ struct QuickActionsView: View {
           .font(.title2)
           .bold()
 
+        // Nudge
         GroupBox("Send Nudge") {
           VStack(alignment: .leading, spacing: 8) {
             LabeledContent("Target:") {
-              TextField("gtstation/witness", text: $nudgeTarget)
+              TextField("e.g. fursatech/witness, mayor/", text: $nudgeTarget)
                 .textFieldStyle(.roundedBorder)
             }
             LabeledContent("Message:") {
@@ -32,18 +33,37 @@ struct QuickActionsView: View {
           }
         }
 
+        // System info
+        if let town = appState.townStatus {
+          GroupBox("Town Info") {
+            VStack(alignment: .leading, spacing: 6) {
+              LabeledContent("Name", value: town.name)
+              LabeledContent("Location", value: town.location)
+              if let overseer = town.overseer {
+                LabeledContent("Overseer", value: overseer.name ?? "unknown")
+              }
+              if let tmux = town.tmux {
+                LabeledContent("Tmux Sessions", value: "\(tmux.session_count ?? 0)")
+              }
+            }
+            .font(.callout)
+          }
+        }
+
+        // Refresh
         GroupBox("System") {
           HStack(spacing: 12) {
-            Button("Refresh All") {
+            Button("Refresh All Data") {
               Task { await appState.refresh() }
             }
             .disabled(appState.isLoading)
+            .buttonStyle(.bordered)
           }
         }
 
         if let feedback {
           Text(feedback)
-            .foregroundStyle(.green)
+            .foregroundStyle(feedback.hasPrefix("Error") ? .red : .green)
             .font(.caption)
         }
       }
