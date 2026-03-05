@@ -3,6 +3,9 @@ import SwiftUI
 struct DashboardView: View {
   @EnvironmentObject var appState: AppState
   @State private var selectedSection: DashboardSection = .overview
+  @State private var loadProgress: Double = 0
+  @State private var progressTimer: Timer? = nil
+  @State private var isProgressVisible: Bool = false
 
   enum DashboardSection: String, CaseIterable, Identifiable {
     case overview = "Overview"
@@ -10,6 +13,7 @@ struct DashboardView: View {
     case rigs = "Rigs"
     case dolt = "Dolt"
     case nudge = "Nudge"
+    case contacts = "Contacts"
 
     var id: String { rawValue }
 
@@ -20,6 +24,7 @@ struct DashboardView: View {
       case .rigs: return "server.rack"
       case .dolt: return "cylinder"
       case .nudge: return "bubble.left.and.bubble.right"
+      case .contacts: return "person.2"
       }
     }
   }
@@ -61,6 +66,8 @@ struct DashboardView: View {
           DoltHealthView()
         case .nudge:
           NudgeView()
+        case .contacts:
+          ContactsView()
         }
       }
       .environmentObject(appState)
@@ -83,6 +90,65 @@ struct DashboardView: View {
       }
     }
     .navigationTitle("Gas Station")
+    .overlay(alignment: .top) {
+      if isProgressVisible {
+        ProgressBar(progress: loadProgress)
+          .frame(height: 3)
+          .frame(maxWidth: .infinity)
+          .ignoresSafeArea()
+          .transition(.opacity)
+      }
+    }
+    .onChange(of: appState.isLoading) { _, loading in
+      if loading {
+        startProgress()
+      } else {
+        finishProgress()
+      }
+    }
+  }
+
+  private func startProgress() {
+    loadProgress = 0
+    isProgressVisible = true
+    progressTimer?.invalidate()
+    // Advance to ~0.9 over 5 seconds (never reaches 1.0 on the timer alone)
+    progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
+      Task { @MainActor in
+        if loadProgress < 0.9 {
+          let remaining = 0.9 - loadProgress
+          loadProgress += remaining * 0.05 * (1.0 / 4.5)
+        }
+      }
+    }
+  }
+
+  private func finishProgress() {
+    progressTimer?.invalidate()
+    progressTimer = nil
+    withAnimation(.easeOut(duration: 0.25)) {
+      loadProgress = 1.0
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+      withAnimation(.easeIn(duration: 0.2)) {
+        isProgressVisible = false
+      }
+      loadProgress = 0
+    }
+  }
+}
+
+struct ProgressBar: View {
+  let progress: Double
+
+  var body: some View {
+    GeometryReader { geo in
+      Rectangle()
+        .fill(Color.accentColor)
+        .frame(width: geo.size.width * progress, height: 3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .animation(.linear(duration: 0.05), value: progress)
+    }
   }
 }
 

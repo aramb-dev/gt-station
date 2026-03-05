@@ -351,8 +351,10 @@ struct ChatPanel: View {
     isSending = true
     errorText = nil
     input = ""
+    // gt nudge rejects trailing slashes (e.g. "deacon/" → "deacon")
+    let target = agent.id.hasSuffix("/") ? String(agent.id.dropLast()) : agent.id
     do {
-      _ = try await GTClient.shared.nudge(agent.id, message: text)
+      _ = try await GTClient.shared.nudge(target, message: text)
       history.append(NudgeMessage(to: agent.id, text: text))
     } catch {
       errorText = error.localizedDescription
