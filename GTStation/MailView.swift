@@ -1,16 +1,76 @@
 import SwiftUI
 
+// MARK: - Thread Model
+
+struct MailThread: Identifiable {
+  let id: String // thread_id
+  let messages: [MailItem]
+
+  var latestMessage: MailItem {
+    messages.first!
+  }
+
+  var subject: String {
+    // Use the first non-"Re:" subject, or fall back to latest
+    let original = messages.last(where: { !$0.subject.hasPrefix("Re:") })
+    return original?.subject ?? latestMessage.subject
+  }
+
+  var hasUnread: Bool {
+    messages.contains { $0.isUnread }
+  }
+
+  var unreadCount: Int {
+    messages.filter { $0.isUnread }.count
+  }
+
+  var latestDate: String {
+    latestMessage.formattedDate
+  }
+
+  var participants: [String] {
+    Array(Set(messages.compactMap { $0.from }))
+  }
+}
+
+// MARK: - Mail View
+
 struct MailView: View {
   @EnvironmentObject var appState: AppState
-  @State private var selectedMailId: String? = nil
+  @State private var selectedThreadId: String? = nil
+  @State private var selectedMessageId: String? = nil
   @State private var selectedContent: String = ""
   @State private var isLoadingContent: Bool = false
   @State private var showCompose: Bool = false
+  @State private var replyContext: ReplyContext? = nil
   @State private var actionFeedback: String? = nil
+
+  struct ReplyContext {
+    let to: String
+    let subject: String
+    let replyToId: String
+  }
+
+  private var threads: [MailThread] {
+    let grouped = Dictionary(grouping: appState.mailItems) { item in
+      item.thread_id ?? item.id
+    }
+    return grouped.map { (threadId, messages) in
+      MailThread(
+        id: threadId,
+        messages: messages.sorted { ($0.timestamp ?? "") > ($1.timestamp ?? "") }
+      )
+    }
+    .sorted { ($0.latestMessage.timestamp ?? "") > ($1.latestMessage.timestamp ?? "") }
+  }
+
+  private var selectedThread: MailThread? {
+    threads.first { $0.id == selectedThreadId }
+  }
 
   var body: some View {
     HSplitView {
-      // Mail list
+      // Thread list
       VStack(spacing: 0) {
         // Header
         HStack(alignment: .center) {
@@ -19,17 +79,18 @@ struct MailView: View {
               .font(.title3)
               .fontWeight(.semibold)
             if appState.unreadMailCount > 0 {
-              Text("\(appState.unreadMailCount) unread of \(appState.mailItems.count)")
+              Text("\(appState.unreadMailCount) unread, \(threads.count) threads")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             } else {
-              Text("\(appState.mailItems.count) messages")
+              Text("\(threads.count) threads")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
           }
           Spacer()
           Button {
+            replyContext = nil
             showCompose = true
           } label: {
             Image(systemName: "square.and.pencil")
@@ -43,7 +104,7 @@ struct MailView: View {
 
         Divider()
 
-        if appState.mailItems.isEmpty {
+        if threads.isEmpty {
           VStack(spacing: 12) {
             Image(systemName: "tray")
               .font(.system(size: 36))
@@ -54,23 +115,25 @@ struct MailView: View {
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-          List(appState.mailItems, selection: $selectedMailId) { item in
-            MailListRow(item: item)
-              .tag(item.id)
+          List(threads, selection: $selectedThreadId) { thread in
+            ThreadListRow(thread: thread)
+              .tag(thread.id)
           }
           .listStyle(.inset)
         }
       }
       .frame(minWidth: 280, idealWidth: 320, maxWidth: 380)
-      .onChange(of: selectedMailId) { _, newId in
-        if let id = newId {
-          Task { await loadMailContent(id: id) }
-        } else {
-          selectedContent = ""
+      .onChange(of: selectedThreadId) { _, newId in
+        selectedMessageId = nil
+        selectedContent = ""
+        if let thread = threads.first(where: { $0.id == newId }),
+           let first = thread.messages.first {
+          selectedMessageId = first.id
+          Task { await loadMailContent(id: first.id) }
         }
       }
 
-      // Mail content
+      // Thread detail
       VStack(spacing: 0) {
         if let feedback = actionFeedback {
           HStack(spacing: 6) {
@@ -85,28 +148,38 @@ struct MailView: View {
           .background(.green.opacity(0.08))
         }
 
-        if isLoadingContent {
+        if isLoadingContent && selectedThread == nil {
           VStack(spacing: 12) {
             ProgressView()
               .scaleEffect(0.8)
-            Text("Loading message...")
+            Text("Loading...")
               .font(.callout)
               .foregroundStyle(.secondary)
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if let selectedId = selectedMailId,
-                  let item = appState.mailItems.first(where: { $0.id == selectedId }) {
-          MailDetailView(
-            item: item,
-            content: selectedContent,
-            onMarkRead: { await markRead() }
+        } else if let thread = selectedThread {
+          ThreadDetailView(
+            thread: thread,
+            selectedMessageId: $selectedMessageId,
+            selectedContent: $selectedContent,
+            isLoadingContent: isLoadingContent,
+            onLoadMessage: { id in await loadMailContent(id: id) },
+            onReply: { item in
+              replyContext = ReplyContext(
+                to: item.from ?? "unknown",
+                subject: item.subject.hasPrefix("Re:") ? item.subject : "Re: \(item.subject)",
+                replyToId: item.id
+              )
+              showCompose = true
+            },
+            onMarkRead: { id in await markRead(id: id) }
           )
         } else {
           VStack(spacing: 12) {
             Image(systemName: "envelope.open")
               .font(.system(size: 40))
               .foregroundStyle(.quaternary)
-            Text("Select a message to read")
+            Text("Select a conversation")
               .font(.callout)
               .foregroundStyle(.secondary)
           }
@@ -116,8 +189,13 @@ struct MailView: View {
       .frame(minWidth: 420)
     }
     .sheet(isPresented: $showCompose) {
-      ComposeMailView(isPresented: $showCompose)
-        .environmentObject(appState)
+      ComposeMailView(
+        isPresented: $showCompose,
+        prefillTo: replyContext?.to ?? "",
+        prefillSubject: replyContext?.subject ?? "",
+        replyToId: replyContext?.replyToId
+      )
+      .environmentObject(appState)
     }
   }
 
@@ -131,8 +209,7 @@ struct MailView: View {
     isLoadingContent = false
   }
 
-  private func markRead() async {
-    guard let id = selectedMailId else { return }
+  private func markRead(id: String) async {
     do {
       _ = try await GTClient.shared.mailMarkRead(id)
       actionFeedback = "Marked as read"
@@ -145,19 +222,19 @@ struct MailView: View {
   }
 }
 
-// MARK: - Mail List Row
+// MARK: - Thread List Row
 
-struct MailListRow: View {
-  let item: MailItem
+struct ThreadListRow: View {
+  let thread: MailThread
 
   var body: some View {
     HStack(spacing: 10) {
       // Unread indicator
       Circle()
-        .fill(item.isUnread ? .blue : .clear)
+        .fill(thread.hasUnread ? .blue : .clear)
         .frame(width: 8, height: 8)
 
-      // Avatar circle
+      // Avatar
       ZStack {
         Circle()
           .fill(avatarColor.opacity(0.15))
@@ -169,19 +246,20 @@ struct MailListRow: View {
 
       VStack(alignment: .leading, spacing: 3) {
         HStack {
-          Text(item.from ?? "unknown")
+          Text(thread.participants.joined(separator: ", "))
             .font(.callout)
-            .fontWeight(item.isUnread ? .semibold : .regular)
+            .fontWeight(thread.hasUnread ? .semibold : .regular)
+            .lineLimit(1)
           Spacer()
-          Text(item.formattedDate)
+          Text(thread.latestDate)
             .font(.caption2)
             .foregroundStyle(.tertiary)
         }
-        Text(item.subject.isEmpty ? "(no subject)" : item.subject)
+        Text(thread.subject)
           .font(.subheadline)
-          .foregroundStyle(item.isUnread ? .primary : .secondary)
+          .foregroundStyle(thread.hasUnread ? .primary : .secondary)
           .lineLimit(1)
-        if let body = item.body {
+        if let body = thread.latestMessage.body {
           Text(body)
             .font(.caption)
             .foregroundStyle(.tertiary)
@@ -189,131 +267,222 @@ struct MailListRow: View {
         }
       }
 
-      if let priority = item.priority, priority != "normal" {
-        PriorityBadge(priority: priority)
+      // Message count badge
+      if thread.messages.count > 1 {
+        Text("\(thread.messages.count)")
+          .font(.caption2)
+          .fontWeight(.bold)
+          .foregroundStyle(.secondary)
+          .padding(.horizontal, 6)
+          .padding(.vertical, 2)
+          .background(.secondary.opacity(0.12), in: Capsule())
       }
     }
     .padding(.vertical, 4)
   }
 
   private var avatarInitial: String {
-    let name = item.from ?? "?"
+    let name = thread.latestMessage.from ?? "?"
     return String(name.prefix(1)).uppercased()
   }
 
   private var avatarColor: Color {
-    let name = item.from ?? ""
-    switch name.lowercased() {
-    case "overseer": return .purple
-    case let n where n.contains("witness"): return .orange
-    case let n where n.contains("refinery"): return .teal
-    case let n where n.contains("deacon"): return .green
-    default: return .blue
-    }
+    let name = thread.latestMessage.from ?? ""
+    return colorForSender(name)
   }
 }
 
-// MARK: - Mail Detail View
+// MARK: - Thread Detail View
 
-struct MailDetailView: View {
-  let item: MailItem
-  let content: String
-  let onMarkRead: () async -> Void
+struct ThreadDetailView: View {
+  let thread: MailThread
+  @Binding var selectedMessageId: String?
+  @Binding var selectedContent: String
+  let isLoadingContent: Bool
+  let onLoadMessage: (String) async -> Void
+  let onReply: (MailItem) -> Void
+  let onMarkRead: (String) async -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      // Header
-      VStack(alignment: .leading, spacing: 8) {
-        Text(item.subject)
+      // Thread header
+      HStack {
+        Text(thread.subject)
           .font(.title2)
           .fontWeight(.semibold)
+          .lineLimit(2)
           .textSelection(.enabled)
-
-        HStack(spacing: 16) {
-          HStack(spacing: 6) {
-            ZStack {
-              Circle()
-                .fill(avatarColor.opacity(0.15))
-                .frame(width: 24, height: 24)
-              Text(String((item.from ?? "?").prefix(1)).uppercased())
-                .font(.system(.caption2, design: .rounded, weight: .bold))
-                .foregroundStyle(avatarColor)
-            }
-            VStack(alignment: .leading, spacing: 0) {
-              Text(item.from ?? "unknown")
-                .font(.callout)
-                .fontWeight(.medium)
-              if let to = item.to {
-                Text("to \(to)")
-                  .font(.caption2)
-                  .foregroundStyle(.tertiary)
-              }
-            }
-          }
-          Spacer()
-          VStack(alignment: .trailing, spacing: 2) {
-            Text(item.formattedDate)
-              .font(.caption)
-              .foregroundStyle(.secondary)
-            if let threadId = item.thread_id {
-              Text(threadId.prefix(12))
-                .font(.caption2)
-                .foregroundStyle(.quaternary)
-            }
-          }
-        }
-
-        if let priority = item.priority, priority != "normal" {
-          PriorityBadge(priority: priority)
-        }
+        Spacer()
+        Text("\(thread.messages.count) messages")
+          .font(.caption)
+          .foregroundStyle(.secondary)
       }
       .padding(16)
       .background(.secondary.opacity(0.04))
 
       Divider()
 
-      // Body
+      // Messages in thread
       ScrollView {
-        Text(content.isEmpty ? "(empty)" : content)
-          .font(.system(.body, design: .monospaced))
-          .lineSpacing(4)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(16)
-          .textSelection(.enabled)
+        LazyVStack(alignment: .leading, spacing: 0) {
+          ForEach(thread.messages.reversed(), id: \.id) { message in
+            ThreadMessageRow(
+              message: message,
+              isSelected: message.id == selectedMessageId,
+              content: message.id == selectedMessageId ? selectedContent : nil,
+              isLoading: message.id == selectedMessageId && isLoadingContent,
+              onSelect: {
+                selectedMessageId = message.id
+                Task { await onLoadMessage(message.id) }
+              },
+              onReply: { onReply(message) },
+              onMarkRead: { Task { await onMarkRead(message.id) } }
+            )
+            Divider()
+          }
+        }
       }
 
       Divider()
 
-      // Actions bar
+      // Reply bar
       HStack(spacing: 12) {
-        if item.isUnread {
-          Button {
-            Task { await onMarkRead() }
-          } label: {
-            Label("Mark Read", systemImage: "envelope.open")
+        Button {
+          if let latest = thread.messages.first {
+            onReply(latest)
           }
-          .buttonStyle(.bordered)
-          .controlSize(.small)
+        } label: {
+          Label("Reply", systemImage: "arrowshape.turn.up.left")
         }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.small)
         Spacer()
-        Text(item.id)
-          .font(.caption2)
-          .foregroundStyle(.quaternary)
-          .textSelection(.enabled)
       }
       .padding(.horizontal, 16)
       .padding(.vertical, 10)
     }
   }
+}
 
-  private var avatarColor: Color {
-    let name = item.from ?? ""
-    switch name.lowercased() {
-    case "overseer": return .purple
-    case let n where n.contains("witness"): return .orange
-    case let n where n.contains("refinery"): return .teal
-    case let n where n.contains("deacon"): return .green
-    default: return .blue
+// MARK: - Thread Message Row
+
+struct ThreadMessageRow: View {
+  let message: MailItem
+  let isSelected: Bool
+  let content: String?
+  let isLoading: Bool
+  let onSelect: () -> Void
+  let onReply: () -> Void
+  let onMarkRead: () -> Void
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      // Message header (always visible)
+      Button(action: onSelect) {
+        HStack(spacing: 10) {
+          // Unread dot
+          Circle()
+            .fill(message.isUnread ? .blue : .clear)
+            .frame(width: 6, height: 6)
+
+          // Avatar
+          ZStack {
+            Circle()
+              .fill(colorForSender(message.from ?? "").opacity(0.15))
+              .frame(width: 28, height: 28)
+            Text(String((message.from ?? "?").prefix(1)).uppercased())
+              .font(.system(.caption2, design: .rounded, weight: .bold))
+              .foregroundStyle(colorForSender(message.from ?? ""))
+          }
+
+          VStack(alignment: .leading, spacing: 1) {
+            HStack {
+              Text(message.from ?? "unknown")
+                .font(.callout)
+                .fontWeight(message.isUnread ? .semibold : .medium)
+              if let to = message.to {
+                Text("to \(to)")
+                  .font(.caption2)
+                  .foregroundStyle(.tertiary)
+              }
+            }
+            Text(message.formattedDate)
+              .font(.caption2)
+              .foregroundStyle(.tertiary)
+          }
+
+          Spacer()
+
+          if let priority = message.priority, priority != "normal" {
+            PriorityBadge(priority: priority)
+          }
+
+          Image(systemName: isSelected ? "chevron.down" : "chevron.right")
+            .font(.caption)
+            .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .background(isSelected ? Color.secondary.opacity(0.06) : Color.clear)
+
+      // Expanded content
+      if isSelected {
+        VStack(alignment: .leading, spacing: 0) {
+          if isLoading {
+            HStack {
+              ProgressView()
+                .scaleEffect(0.7)
+              Text("Loading...")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 56)
+            .padding(.vertical, 12)
+          } else if let content {
+            Text(content)
+              .font(.system(.body, design: .monospaced))
+              .lineSpacing(4)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(.horizontal, 56)
+              .padding(.vertical, 12)
+              .textSelection(.enabled)
+
+            // Per-message actions
+            HStack(spacing: 10) {
+              Button {
+                onReply()
+              } label: {
+                Label("Reply", systemImage: "arrowshape.turn.up.left")
+              }
+              .buttonStyle(.bordered)
+              .controlSize(.mini)
+
+              if message.isUnread {
+                Button {
+                  onMarkRead()
+                } label: {
+                  Label("Mark Read", systemImage: "envelope.open")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
+              }
+
+              Spacer()
+
+              Text(message.id)
+                .font(.caption2)
+                .foregroundStyle(.quaternary)
+                .textSelection(.enabled)
+            }
+            .padding(.horizontal, 56)
+            .padding(.bottom, 12)
+          }
+        }
+        .background(.secondary.opacity(0.03))
+      }
     }
   }
 }
@@ -347,16 +516,26 @@ struct PriorityBadge: View {
 struct ComposeMailView: View {
   @Binding var isPresented: Bool
   @EnvironmentObject var appState: AppState
-  @State private var to: String = ""
-  @State private var subject: String = ""
+  @State private var to: String
+  @State private var subject: String
   @State private var message: String = ""
   @State private var isSending: Bool = false
   @State private var feedback: String? = nil
+  private let replyToId: String?
+
+  init(isPresented: Binding<Bool>, prefillTo: String = "", prefillSubject: String = "", replyToId: String? = nil) {
+    _isPresented = isPresented
+    _to = State(initialValue: prefillTo)
+    _subject = State(initialValue: prefillSubject)
+    self.replyToId = replyToId
+  }
+
+  var isReply: Bool { replyToId != nil }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       HStack {
-        Text("New Message")
+        Text(isReply ? "Reply" : "New Message")
           .font(.title3)
           .fontWeight(.semibold)
         Spacer()
@@ -376,7 +555,7 @@ struct ComposeMailView: View {
             .font(.callout)
             .foregroundStyle(.secondary)
             .frame(width: 60, alignment: .trailing)
-          TextField("e.g. overseer, fursatech/witness", text: $to)
+          TextField("e.g. overseer, mayor/", text: $to)
             .textFieldStyle(.roundedBorder)
         }
         HStack {
@@ -410,7 +589,7 @@ struct ComposeMailView: View {
         Spacer()
         Button("Cancel") { isPresented = false }
           .keyboardShortcut(.cancelAction)
-        Button("Send") {
+        Button(isReply ? "Send Reply" : "Send") {
           Task { await send() }
         }
         .disabled(to.isEmpty || subject.isEmpty || message.isEmpty || isSending)
@@ -425,13 +604,27 @@ struct ComposeMailView: View {
   private func send() async {
     isSending = true
     do {
-      _ = try await GTClient.shared.mailSend(to: to, subject: subject, message: message)
+      _ = try await GTClient.shared.mailSend(to: to, subject: subject, message: message, replyTo: replyToId)
       feedback = "Sent!"
+      await appState.refresh()
       try? await Task.sleep(for: .seconds(1))
       isPresented = false
     } catch {
       feedback = "Error: \(error.localizedDescription)"
     }
     isSending = false
+  }
+}
+
+// MARK: - Helpers
+
+func colorForSender(_ name: String) -> Color {
+  switch name.lowercased() {
+  case "overseer": return .purple
+  case let n where n.contains("witness"): return .orange
+  case let n where n.contains("refinery"): return .teal
+  case let n where n.contains("deacon"): return .green
+  case let n where n.contains("mayor"): return .indigo
+  default: return .blue
   }
 }

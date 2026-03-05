@@ -45,8 +45,8 @@ actor GTClient {
     return try JSONDecoder().decode([RigInfo].self, from: Data(raw.utf8))
   }
 
-  func mailInboxJSON() async throws -> [MailItem] {
-    let raw = try await run(["mail", "inbox", "--json", "-a"])
+  func mailInboxJSON(identity: String = "overseer") async throws -> [MailItem] {
+    let raw = try await run(["mail", "inbox", "--identity", identity, "--json", "-a"])
     return try JSONDecoder().decode([MailItem].self, from: Data(raw.utf8))
   }
 
@@ -70,8 +70,12 @@ actor GTClient {
   }
 
   // Actions
-  func mailSend(to recipient: String, subject: String, message: String) async throws -> String {
-    try await run(["mail", "send", recipient, "-s", subject, "-m", message])
+  func mailSend(to recipient: String, subject: String, message: String, replyTo: String? = nil) async throws -> String {
+    var args = ["mail", "send", recipient, "-s", subject, "-m", message]
+    if let replyTo {
+      args += ["--reply-to", replyTo]
+    }
+    return try await run(args)
   }
 
   func mailMarkRead(_ id: String) async throws -> String {

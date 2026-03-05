@@ -40,7 +40,7 @@ class AppState: ObservableObject {
 
     async let statusTask = client.statusJSON()
     async let rigsTask = client.rigListJSON()
-    async let mailTask = client.mailInboxJSON()
+    async let mailTask = client.mailInboxJSON(identity: "overseer")
     async let doltTask = client.doltStatus()
     async let polecatTask = client.polecatListJSON()
     async let convoyTask = client.convoyListJSON()

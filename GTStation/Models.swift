@@ -96,6 +96,7 @@ struct MailItem: Codable, Identifiable {
   let priority: String?
   let type: String?
   let thread_id: String?
+  let reply_to: String?
 
   var isUnread: Bool { !(read ?? true) }
 
