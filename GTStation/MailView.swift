@@ -516,11 +516,13 @@ struct PriorityBadge: View {
 struct ComposeMailView: View {
   @Binding var isPresented: Bool
   @EnvironmentObject var appState: AppState
+  @StateObject private var addressCache = AddressCache.shared
   @State private var to: String
   @State private var subject: String
   @State private var message: String = ""
   @State private var isSending: Bool = false
   @State private var feedback: String? = nil
+  @State private var showSuggestions: Bool = false
   private let replyToId: String?
 
   init(isPresented: Binding<Bool>, prefillTo: String = "", prefillSubject: String = "", replyToId: String? = nil) {
@@ -531,6 +533,10 @@ struct ComposeMailView: View {
   }
 
   var isReply: Bool { replyToId != nil }
+
+  private var suggestions: [AddressCache.CachedAddress] {
+    addressCache.search(to)
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
@@ -550,14 +556,61 @@ struct ComposeMailView: View {
       }
 
       VStack(spacing: 10) {
-        HStack {
-          Text("To")
-            .font(.callout)
-            .foregroundStyle(.secondary)
-            .frame(width: 60, alignment: .trailing)
-          TextField("e.g. overseer, mayor/", text: $to)
-            .textFieldStyle(.roundedBorder)
+        VStack(alignment: .leading, spacing: 4) {
+          HStack {
+            Text("To")
+              .font(.callout)
+              .foregroundStyle(.secondary)
+              .frame(width: 60, alignment: .trailing)
+            TextField("e.g. overseer, mayor/", text: $to)
+              .textFieldStyle(.roundedBorder)
+              .onChange(of: to) { _, newValue in
+                showSuggestions = !newValue.isEmpty && !suggestions.isEmpty
+              }
+          }
+
+          // Address suggestions dropdown
+          if showSuggestions && !suggestions.isEmpty {
+            VStack(spacing: 0) {
+              ForEach(suggestions.prefix(5)) { addr in
+                Button {
+                  to = addr.address
+                  showSuggestions = false
+                } label: {
+                  HStack {
+                    Text(addr.address)
+                      .font(.callout)
+                      .fontWeight(.medium)
+                    if addr.displayName != addr.address {
+                      Text(addr.displayName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if addr.useCount > 0 {
+                      Text("\(addr.useCount)x")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    }
+                  }
+                  .padding(.horizontal, 10)
+                  .padding(.vertical, 6)
+                  .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                Divider()
+              }
+            }
+            .background(.secondary.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay(
+              RoundedRectangle(cornerRadius: 6)
+                .strokeBorder(.secondary.opacity(0.12), lineWidth: 1)
+            )
+            .padding(.leading, 68)
+          }
         }
+
         HStack {
           Text("Subject")
             .font(.callout)
@@ -598,13 +651,14 @@ struct ComposeMailView: View {
       }
     }
     .padding(20)
-    .frame(width: 500, height: 400)
+    .frame(width: 500, height: 440)
   }
 
   private func send() async {
     isSending = true
     do {
       _ = try await GTClient.shared.mailSend(to: to, subject: subject, message: message, replyTo: replyToId)
+      AddressCache.shared.recordSend(to: to)
       feedback = "Sent!"
       await appState.refresh()
       try? await Task.sleep(for: .seconds(1))
