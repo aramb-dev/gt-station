@@ -9,7 +9,7 @@ struct DashboardView: View {
     case mail = "Mail"
     case rigs = "Rigs"
     case dolt = "Dolt"
-    case actions = "Actions"
+    case nudge = "Nudge"
 
     var id: String { rawValue }
 
@@ -19,7 +19,7 @@ struct DashboardView: View {
       case .mail: return "envelope"
       case .rigs: return "server.rack"
       case .dolt: return "cylinder"
-      case .actions: return "bolt"
+      case .nudge: return "bubble.left.and.bubble.right"
       }
     }
   }
@@ -59,8 +59,8 @@ struct DashboardView: View {
           RigsView()
         case .dolt:
           DoltHealthView()
-        case .actions:
-          QuickActionsView()
+        case .nudge:
+          NudgeView()
         }
       }
       .environmentObject(appState)

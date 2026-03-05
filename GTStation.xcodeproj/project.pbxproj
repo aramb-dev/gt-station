@@ -20,6 +20,7 @@
 		AA0000000000000000000039 /* QuickActionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000029 /* QuickActionsView.swift */; };
 		AA000000000000000000003C /* AddressCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000002E /* AddressCache.swift */; };
 		AA000000000000000000003D /* ContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000002F /* ContactsView.swift */; };
+		AA000000000000000000003E /* NudgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000040 /* NudgeView.swift */; };
 		AA0000000000000000000034 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000024 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
@@ -34,6 +35,7 @@
 		AA000000000000000000002D /* RigsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigsView.swift; sourceTree = "<group>"; };
 		AA000000000000000000002E /* AddressCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddressCache.swift; sourceTree = "<group>"; };
 		AA000000000000000000002F /* ContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsView.swift; sourceTree = "<group>"; };
+		AA0000000000000000000040 /* NudgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000024 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000026 /* MailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000027 /* EscalationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EscalationsView.swift; sourceTree = "<group>"; };
@@ -82,6 +84,7 @@
 				AA000000000000000000002D /* RigsView.swift */,
 				AA000000000000000000002E /* AddressCache.swift */,
 				AA000000000000000000002F /* ContactsView.swift */,
+				AA0000000000000000000040 /* NudgeView.swift */,
 				AA0000000000000000000024 /* SettingsView.swift */,
 				AA0000000000000000000026 /* MailView.swift */,
 				AA0000000000000000000027 /* EscalationsView.swift */,
@@ -170,6 +173,7 @@
 				AA000000000000000000003B /* RigsView.swift in Sources */,
 				AA000000000000000000003C /* AddressCache.swift in Sources */,
 				AA000000000000000000003D /* ContactsView.swift in Sources */,
+				AA000000000000000000003E /* NudgeView.swift in Sources */,
 				AA0000000000000000000034 /* SettingsView.swift in Sources */,
 				AA0000000000000000000036 /* MailView.swift in Sources */,
 				AA0000000000000000000037 /* EscalationsView.swift in Sources */,
