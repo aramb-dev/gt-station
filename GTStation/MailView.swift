@@ -12,145 +12,108 @@ struct MailView: View {
     HSplitView {
       // Mail list
       VStack(spacing: 0) {
-        HStack {
-          Text("Inbox")
-            .font(.headline)
-            .padding()
+        // Header
+        HStack(alignment: .center) {
+          VStack(alignment: .leading, spacing: 2) {
+            Text("Inbox")
+              .font(.title3)
+              .fontWeight(.semibold)
+            if appState.unreadMailCount > 0 {
+              Text("\(appState.unreadMailCount) unread of \(appState.mailItems.count)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } else {
+              Text("\(appState.mailItems.count) messages")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+          }
           Spacer()
-          Text("\(appState.unreadMailCount) unread")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .padding(.trailing, 8)
           Button {
             showCompose = true
           } label: {
             Image(systemName: "square.and.pencil")
+              .font(.title3)
           }
-          .padding(.trailing)
+          .buttonStyle(.plain)
+          .foregroundStyle(Color.accentColor)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+
         Divider()
 
         if appState.mailItems.isEmpty {
-          Text("No messages")
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+          VStack(spacing: 12) {
+            Image(systemName: "tray")
+              .font(.system(size: 36))
+              .foregroundStyle(.quaternary)
+            Text("No messages")
+              .font(.callout)
+              .foregroundStyle(.secondary)
+          }
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
           List(appState.mailItems, selection: $selectedMailId) { item in
-            HStack(spacing: 8) {
-              if item.isUnread {
-                Circle()
-                  .fill(.blue)
-                  .frame(width: 6, height: 6)
-              } else {
-                Circle()
-                  .fill(.clear)
-                  .frame(width: 6, height: 6)
-              }
-              VStack(alignment: .leading, spacing: 2) {
-                Text(item.subject.isEmpty ? "(no subject)" : item.subject)
-                  .font(.body)
-                  .fontWeight(item.isUnread ? .semibold : .regular)
-                  .lineLimit(1)
-                HStack {
-                  Text(item.from ?? "unknown")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                  Spacer()
-                  Text(item.formattedDate)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                }
-              }
-            }
-            .padding(.vertical, 2)
-            .tag(item.id)
+            MailListRow(item: item)
+              .tag(item.id)
           }
+          .listStyle(.inset)
         }
       }
-      .frame(minWidth: 260, maxWidth: 340)
+      .frame(minWidth: 280, idealWidth: 320, maxWidth: 380)
       .onChange(of: selectedMailId) { _, newId in
         if let id = newId {
           Task { await loadMailContent(id: id) }
+        } else {
+          selectedContent = ""
         }
       }
 
       // Mail content
-      VStack(alignment: .leading, spacing: 0) {
+      VStack(spacing: 0) {
         if let feedback = actionFeedback {
-          HStack {
+          HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill")
               .foregroundStyle(.green)
             Text(feedback)
-              .font(.caption)
+              .font(.callout)
           }
-          .padding(.horizontal)
-          .padding(.vertical, 6)
+          .padding(.horizontal, 16)
+          .padding(.vertical, 8)
           .frame(maxWidth: .infinity, alignment: .leading)
-          .background(.green.opacity(0.1))
+          .background(.green.opacity(0.08))
         }
 
         if isLoadingContent {
-          ProgressView("Loading...")
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+          VStack(spacing: 12) {
+            ProgressView()
+              .scaleEffect(0.8)
+            Text("Loading message...")
+              .font(.callout)
+              .foregroundStyle(.secondary)
+          }
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let selectedId = selectedMailId,
                   let item = appState.mailItems.first(where: { $0.id == selectedId }) {
-          // Header
-          VStack(alignment: .leading, spacing: 4) {
-            Text(item.subject)
-              .font(.title3)
-              .fontWeight(.semibold)
-            HStack {
-              Text("From: \(item.from ?? "unknown")")
-              Spacer()
-              Text(item.formattedDate)
-                .foregroundStyle(.tertiary)
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            if let priority = item.priority, priority != "normal" {
-              Text(priority.uppercased())
-                .font(.caption2)
-                .fontWeight(.bold)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(priority == "urgent" ? .red.opacity(0.2) : .orange.opacity(0.2), in: Capsule())
-            }
-          }
-          .padding()
-
-          Divider()
-
-          // Body
-          ScrollView {
-            Text(selectedContent)
-              .font(.system(.body, design: .monospaced))
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .padding()
-              .textSelection(.enabled)
-          }
-
-          Divider()
-
-          HStack {
-            Button("Mark Read") {
-              Task { await markRead() }
-            }
-            .disabled(selectedMailId == nil)
-            Spacer()
-          }
-          .padding()
+          MailDetailView(
+            item: item,
+            content: selectedContent,
+            onMarkRead: { await markRead() }
+          )
         } else {
-          VStack(spacing: 8) {
+          VStack(spacing: 12) {
             Image(systemName: "envelope.open")
-              .font(.largeTitle)
-              .foregroundStyle(.secondary)
-            Text("Select a message")
+              .font(.system(size: 40))
+              .foregroundStyle(.quaternary)
+            Text("Select a message to read")
+              .font(.callout)
               .foregroundStyle(.secondary)
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
       }
-      .frame(minWidth: 400)
+      .frame(minWidth: 420)
     }
     .sheet(isPresented: $showCompose) {
       ComposeMailView(isPresented: $showCompose)
@@ -182,6 +145,205 @@ struct MailView: View {
   }
 }
 
+// MARK: - Mail List Row
+
+struct MailListRow: View {
+  let item: MailItem
+
+  var body: some View {
+    HStack(spacing: 10) {
+      // Unread indicator
+      Circle()
+        .fill(item.isUnread ? .blue : .clear)
+        .frame(width: 8, height: 8)
+
+      // Avatar circle
+      ZStack {
+        Circle()
+          .fill(avatarColor.opacity(0.15))
+          .frame(width: 32, height: 32)
+        Text(avatarInitial)
+          .font(.system(.caption, design: .rounded, weight: .semibold))
+          .foregroundStyle(avatarColor)
+      }
+
+      VStack(alignment: .leading, spacing: 3) {
+        HStack {
+          Text(item.from ?? "unknown")
+            .font(.callout)
+            .fontWeight(item.isUnread ? .semibold : .regular)
+          Spacer()
+          Text(item.formattedDate)
+            .font(.caption2)
+            .foregroundStyle(.tertiary)
+        }
+        Text(item.subject.isEmpty ? "(no subject)" : item.subject)
+          .font(.subheadline)
+          .foregroundStyle(item.isUnread ? .primary : .secondary)
+          .lineLimit(1)
+        if let body = item.body {
+          Text(body)
+            .font(.caption)
+            .foregroundStyle(.tertiary)
+            .lineLimit(1)
+        }
+      }
+
+      if let priority = item.priority, priority != "normal" {
+        PriorityBadge(priority: priority)
+      }
+    }
+    .padding(.vertical, 4)
+  }
+
+  private var avatarInitial: String {
+    let name = item.from ?? "?"
+    return String(name.prefix(1)).uppercased()
+  }
+
+  private var avatarColor: Color {
+    let name = item.from ?? ""
+    switch name.lowercased() {
+    case "overseer": return .purple
+    case let n where n.contains("witness"): return .orange
+    case let n where n.contains("refinery"): return .teal
+    case let n where n.contains("deacon"): return .green
+    default: return .blue
+    }
+  }
+}
+
+// MARK: - Mail Detail View
+
+struct MailDetailView: View {
+  let item: MailItem
+  let content: String
+  let onMarkRead: () async -> Void
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      // Header
+      VStack(alignment: .leading, spacing: 8) {
+        Text(item.subject)
+          .font(.title2)
+          .fontWeight(.semibold)
+          .textSelection(.enabled)
+
+        HStack(spacing: 16) {
+          HStack(spacing: 6) {
+            ZStack {
+              Circle()
+                .fill(avatarColor.opacity(0.15))
+                .frame(width: 24, height: 24)
+              Text(String((item.from ?? "?").prefix(1)).uppercased())
+                .font(.system(.caption2, design: .rounded, weight: .bold))
+                .foregroundStyle(avatarColor)
+            }
+            VStack(alignment: .leading, spacing: 0) {
+              Text(item.from ?? "unknown")
+                .font(.callout)
+                .fontWeight(.medium)
+              if let to = item.to {
+                Text("to \(to)")
+                  .font(.caption2)
+                  .foregroundStyle(.tertiary)
+              }
+            }
+          }
+          Spacer()
+          VStack(alignment: .trailing, spacing: 2) {
+            Text(item.formattedDate)
+              .font(.caption)
+              .foregroundStyle(.secondary)
+            if let threadId = item.thread_id {
+              Text(threadId.prefix(12))
+                .font(.caption2)
+                .foregroundStyle(.quaternary)
+            }
+          }
+        }
+
+        if let priority = item.priority, priority != "normal" {
+          PriorityBadge(priority: priority)
+        }
+      }
+      .padding(16)
+      .background(.secondary.opacity(0.04))
+
+      Divider()
+
+      // Body
+      ScrollView {
+        Text(content.isEmpty ? "(empty)" : content)
+          .font(.system(.body, design: .monospaced))
+          .lineSpacing(4)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(16)
+          .textSelection(.enabled)
+      }
+
+      Divider()
+
+      // Actions bar
+      HStack(spacing: 12) {
+        if item.isUnread {
+          Button {
+            Task { await onMarkRead() }
+          } label: {
+            Label("Mark Read", systemImage: "envelope.open")
+          }
+          .buttonStyle(.bordered)
+          .controlSize(.small)
+        }
+        Spacer()
+        Text(item.id)
+          .font(.caption2)
+          .foregroundStyle(.quaternary)
+          .textSelection(.enabled)
+      }
+      .padding(.horizontal, 16)
+      .padding(.vertical, 10)
+    }
+  }
+
+  private var avatarColor: Color {
+    let name = item.from ?? ""
+    switch name.lowercased() {
+    case "overseer": return .purple
+    case let n where n.contains("witness"): return .orange
+    case let n where n.contains("refinery"): return .teal
+    case let n where n.contains("deacon"): return .green
+    default: return .blue
+    }
+  }
+}
+
+// MARK: - Priority Badge
+
+struct PriorityBadge: View {
+  let priority: String
+
+  var body: some View {
+    Text(priority.uppercased())
+      .font(.system(.caption2, design: .rounded, weight: .bold))
+      .padding(.horizontal, 7)
+      .padding(.vertical, 3)
+      .background(badgeColor.opacity(0.15), in: Capsule())
+      .foregroundStyle(badgeColor)
+  }
+
+  private var badgeColor: Color {
+    switch priority.lowercased() {
+    case "urgent": return .red
+    case "high": return .orange
+    case "low": return .secondary
+    default: return .blue
+    }
+  }
+}
+
+// MARK: - Compose
+
 struct ComposeMailView: View {
   @Binding var isPresented: Bool
   @EnvironmentObject var appState: AppState
@@ -192,44 +354,72 @@ struct ComposeMailView: View {
   @State private var feedback: String? = nil
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Text("Compose Mail")
-        .font(.headline)
-
-      LabeledContent("To:") {
-        TextField("e.g. overseer, fursatech/witness", text: $to)
-          .textFieldStyle(.roundedBorder)
+    VStack(alignment: .leading, spacing: 16) {
+      HStack {
+        Text("New Message")
+          .font(.title3)
+          .fontWeight(.semibold)
+        Spacer()
+        Button {
+          isPresented = false
+        } label: {
+          Image(systemName: "xmark.circle.fill")
+            .font(.title3)
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
       }
-      LabeledContent("Subject:") {
-        TextField("Subject", text: $subject)
-          .textFieldStyle(.roundedBorder)
+
+      VStack(spacing: 10) {
+        HStack {
+          Text("To")
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .frame(width: 60, alignment: .trailing)
+          TextField("e.g. overseer, fursatech/witness", text: $to)
+            .textFieldStyle(.roundedBorder)
+        }
+        HStack {
+          Text("Subject")
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .frame(width: 60, alignment: .trailing)
+          TextField("Subject", text: $subject)
+            .textFieldStyle(.roundedBorder)
+        }
       }
 
-      Text("Message:")
-        .font(.caption)
-        .foregroundStyle(.secondary)
       TextEditor(text: $message)
         .font(.system(.body, design: .monospaced))
-        .frame(height: 140)
-        .border(.secondary.opacity(0.3))
+        .frame(minHeight: 140)
+        .overlay(
+          RoundedRectangle(cornerRadius: 6)
+            .stroke(.secondary.opacity(0.2), lineWidth: 1)
+        )
 
       if let feedback {
-        Text(feedback)
-          .foregroundStyle(feedback.hasPrefix("Error") ? .red : .green)
+        HStack(spacing: 6) {
+          Image(systemName: feedback.hasPrefix("Error") ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
+            .foregroundStyle(feedback.hasPrefix("Error") ? .red : .green)
+          Text(feedback)
+            .font(.callout)
+        }
       }
 
       HStack {
-        Button("Cancel") { isPresented = false }
         Spacer()
+        Button("Cancel") { isPresented = false }
+          .keyboardShortcut(.cancelAction)
         Button("Send") {
           Task { await send() }
         }
         .disabled(to.isEmpty || subject.isEmpty || message.isEmpty || isSending)
         .buttonStyle(.borderedProminent)
+        .keyboardShortcut(.defaultAction)
       }
     }
-    .padding()
-    .frame(width: 460, height: 360)
+    .padding(20)
+    .frame(width: 500, height: 400)
   }
 
   private func send() async {

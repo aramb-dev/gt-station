@@ -7,21 +7,29 @@ struct StatusCard: View {
   let color: Color
 
   var body: some View {
-    VStack(spacing: 6) {
-      Image(systemName: icon)
-        .font(.title2)
-        .foregroundStyle(color)
+    VStack(spacing: 8) {
+      ZStack {
+        RoundedRectangle(cornerRadius: 8)
+          .fill(color.opacity(0.1))
+          .frame(width: 36, height: 36)
+        Image(systemName: icon)
+          .font(.system(size: 16, weight: .semibold))
+          .foregroundStyle(color)
+      }
       Text(value)
-        .font(.callout)
-        .fontWeight(.semibold)
+        .font(.system(.callout, design: .rounded, weight: .bold))
       Text(title)
         .font(.caption)
         .foregroundStyle(.secondary)
     }
     .frame(maxWidth: .infinity)
-    .padding(.vertical, 12)
-    .background(.secondary.opacity(0.08))
-    .clipShape(RoundedRectangle(cornerRadius: 10))
+    .padding(.vertical, 14)
+    .background(.secondary.opacity(0.06))
+    .clipShape(RoundedRectangle(cornerRadius: 12))
+    .overlay(
+      RoundedRectangle(cornerRadius: 12)
+        .strokeBorder(.secondary.opacity(0.08), lineWidth: 1)
+    )
   }
 }
 
@@ -30,14 +38,22 @@ struct SectionCard<Content: View>: View {
   @ViewBuilder let content: Content
 
   var body: some View {
-    GroupBox {
-      VStack(alignment: .leading, spacing: 4) {
-        content
-      }
-    } label: {
+    VStack(alignment: .leading, spacing: 10) {
       Text(title)
         .font(.headline)
+        .foregroundStyle(.primary)
+      VStack(alignment: .leading, spacing: 6) {
+        content
+      }
     }
+    .padding(14)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(.secondary.opacity(0.04))
+    .clipShape(RoundedRectangle(cornerRadius: 10))
+    .overlay(
+      RoundedRectangle(cornerRadius: 10)
+        .strokeBorder(.secondary.opacity(0.08), lineWidth: 1)
+    )
   }
 }
 
