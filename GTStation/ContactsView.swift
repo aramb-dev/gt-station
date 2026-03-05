@@ -283,10 +283,13 @@ struct ContactsView: View {
 struct ContactDetailView: View {
   @State var contact: Contact
   let store: ContactStore
+  @EnvironmentObject var appState: AppState
   @State private var isEditing: Bool = false
   @State private var editName: String = ""
   @State private var editRole: String = ""
   @State private var editNotes: String = ""
+  @State private var showMail: Bool = false
+  @State private var showNudge: Bool = false
 
   var body: some View {
     ScrollView {
@@ -319,6 +322,26 @@ struct ContactDetailView: View {
               .foregroundStyle(.secondary)
               .textSelection(.enabled)
           }
+
+          // Primary action buttons
+          HStack(spacing: 12) {
+            Button {
+              showNudge = true
+            } label: {
+              Label("Nudge", systemImage: "bubble.left")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+
+            Button {
+              showMail = true
+            } label: {
+              Label("Mail", systemImage: "envelope")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+          }
+          .padding(.top, 4)
         }
         .padding(.top, 20)
 
@@ -403,6 +426,92 @@ struct ContactDetailView: View {
       }
     }
     .frame(maxWidth: .infinity)
+    .sheet(isPresented: $showMail) {
+      ComposeMailView(
+        isPresented: $showMail,
+        prefillTo: contact.id,
+        prefillSubject: ""
+      )
+      .environmentObject(appState)
+    }
+    .sheet(isPresented: $showNudge) {
+      QuickNudgeSheet(isPresented: $showNudge, address: contact.id, displayName: contact.displayName)
+    }
+  }
+}
+
+// MARK: - Quick Nudge Sheet
+
+struct QuickNudgeSheet: View {
+  @Binding var isPresented: Bool
+  let address: String
+  let displayName: String
+  @State private var message: String = ""
+  @State private var isSending: Bool = false
+  @State private var feedback: String? = nil
+  @FocusState private var focused: Bool
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      HStack {
+        Label("Nudge \(displayName)", systemImage: "bubble.left")
+          .font(.title3)
+          .fontWeight(.semibold)
+        Spacer()
+        Button { isPresented = false } label: {
+          Image(systemName: "xmark.circle.fill")
+            .font(.title3)
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+      }
+
+      Text(address)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+
+      TextEditor(text: $message)
+        .font(.body)
+        .frame(minHeight: 100)
+        .focused($focused)
+        .overlay(
+          RoundedRectangle(cornerRadius: 8)
+            .stroke(.secondary.opacity(0.2), lineWidth: 1)
+        )
+
+      if let feedback {
+        Text(feedback)
+          .font(.caption)
+          .foregroundStyle(feedback.hasPrefix("Error") ? .red : .green)
+      }
+
+      HStack {
+        Spacer()
+        Button("Cancel") { isPresented = false }
+        Button("Send") { Task { await send() } }
+          .disabled(message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending)
+          .buttonStyle(.borderedProminent)
+          .keyboardShortcut(.defaultAction)
+      }
+    }
+    .padding(20)
+    .frame(width: 420, height: 300)
+    .onAppear { focused = true }
+  }
+
+  private func send() async {
+    isSending = true
+    let target = address.hasSuffix("/") ? String(address.dropLast()) : address
+    do {
+      _ = try await GTClient.shared.nudge(target, message: message.trimmingCharacters(in: .whitespacesAndNewlines))
+      NudgeHistory.shared.append(NudgeMessage(to: address, text: message.trimmingCharacters(in: .whitespacesAndNewlines)))
+      feedback = "Sent!"
+      try? await Task.sleep(for: .seconds(0.8))
+      isPresented = false
+    } catch {
+      feedback = "Error: \(error.localizedDescription)"
+    }
+    isSending = false
   }
 }
 
