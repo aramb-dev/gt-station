@@ -22,6 +22,8 @@
 		AA000000000000000000003D /* ContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000002F /* ContactsView.swift */; };
 		AA000000000000000000003E /* NudgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000040 /* NudgeView.swift */; };
 		AA0000000000000000000034 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000024 /* SettingsView.swift */; };
+		AA0000000000000000000047 /* DoltClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000048 /* DoltClient.swift */; };
+		AA000000000000000000004B /* MySQLNIO in Frameworks */ = {isa = PBXBuildFile; productRef = AA000000000000000000004A /* MySQLNIO */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +45,7 @@
 		AA0000000000000000000029 /* QuickActionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionsView.swift; sourceTree = "<group>"; };
 		AA000000000000000000002A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA000000000000000000002B /* GTStation.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GTStation.entitlements; sourceTree = "<group>"; };
+		AA0000000000000000000048 /* DoltClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoltClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +53,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA000000000000000000004B /* MySQLNIO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -86,6 +90,7 @@
 				AA000000000000000000002F /* ContactsView.swift */,
 				AA0000000000000000000040 /* NudgeView.swift */,
 				AA0000000000000000000024 /* SettingsView.swift */,
+				AA0000000000000000000048 /* DoltClient.swift */,
 				AA0000000000000000000026 /* MailView.swift */,
 				AA0000000000000000000027 /* EscalationsView.swift */,
 				AA0000000000000000000028 /* DoltHealthView.swift */,
@@ -112,6 +117,9 @@
 			dependencies = (
 			);
 			name = GTStation;
+			packageProductDependencies = (
+				AA000000000000000000004A /* MySQLNIO */,
+			);
 			productName = GTStation;
 			productReference = AA0000000000000000000009 /* GTStation.app */;
 			productType = "com.apple.product-type.application";
@@ -140,6 +148,9 @@
 				Base,
 			);
 			mainGroup = AA0000000000000000000003 /* GTStation */;
+			packageReferences = (
+				AA0000000000000000000049 /* XCRemoteSwiftPackageReference "mysql-nio" */,
+			);
 			productRefGroup = AA0000000000000000000007 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -175,6 +186,7 @@
 				AA000000000000000000003D /* ContactsView.swift in Sources */,
 				AA000000000000000000003E /* NudgeView.swift in Sources */,
 				AA0000000000000000000034 /* SettingsView.swift in Sources */,
+				AA0000000000000000000047 /* DoltClient.swift in Sources */,
 				AA0000000000000000000036 /* MailView.swift in Sources */,
 				AA0000000000000000000037 /* EscalationsView.swift in Sources */,
 				AA0000000000000000000038 /* DoltHealthView.swift in Sources */,
@@ -370,6 +382,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AA0000000000000000000049 /* XCRemoteSwiftPackageReference "mysql-nio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/vapor/mysql-nio.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA000000000000000000004A /* MySQLNIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA0000000000000000000049 /* XCRemoteSwiftPackageReference "mysql-nio" */;
+			productName = MySQLNIO;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 	};
 	rootObject = AA0000000000000000000001 /* Project object */;
