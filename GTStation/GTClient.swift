@@ -12,6 +12,8 @@ actor GTClient {
     process.arguments = args
     var env = ProcessInfo.processInfo.environment
     env["HOME"] = NSHomeDirectory()
+    env["GT_IDENTITY"] = "overseer"
+    env["GT_ROLE"] = "overseer"
     process.environment = env
     process.currentDirectoryURL = URL(fileURLWithPath: townRoot)
 
