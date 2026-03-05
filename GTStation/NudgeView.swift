@@ -70,7 +70,7 @@ struct NudgeAgent: Identifiable, Hashable {
 
 struct NudgeView: View {
   @EnvironmentObject var appState: AppState
-  @StateObject private var history = NudgeHistory.shared
+  @ObservedObject private var history = NudgeHistory.shared
   @State private var selectedId: String? = nil
   @State private var searchText: String = ""
 
@@ -220,7 +220,7 @@ struct AgentRow: View {
 
 struct ChatPanel: View {
   let agent: NudgeAgent
-  @StateObject private var history = NudgeHistory.shared
+  @ObservedObject private var history = NudgeHistory.shared
   @State private var input: String = ""
   @State private var isSending: Bool = false
   @State private var errorText: String? = nil

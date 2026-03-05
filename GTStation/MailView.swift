@@ -512,7 +512,7 @@ struct PriorityBadge: View {
 struct ComposeMailView: View {
   @Binding var isPresented: Bool
   @EnvironmentObject var appState: AppState
-  @StateObject private var addressCache = AddressCache.shared
+  @ObservedObject private var addressCache = AddressCache.shared
   @State private var to: String
   @State private var subject: String
   @State private var message: String = ""

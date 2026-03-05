@@ -139,7 +139,7 @@ class ContactStore: ObservableObject {
 // MARK: - Contacts View
 
 struct ContactsView: View {
-  @StateObject private var store = ContactStore.shared
+  @ObservedObject private var store = ContactStore.shared
   @EnvironmentObject var appState: AppState
   @State private var selectedContactId: String? = nil
   @State private var searchText: String = ""
