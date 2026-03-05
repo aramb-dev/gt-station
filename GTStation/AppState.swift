@@ -18,7 +18,8 @@ class AppState: ObservableObject {
   private var knownMailIds: Set<String> = []
   private var isFirstLoad = true
 
-  private var refreshTimer: Timer?
+  private var mailTimer: Timer?    // fast: every 3s — mail only
+  private var fullTimer: Timer?    // slow: every 30s — status, rigs, dolt, etc.
   private let client = GTClient.shared
   private let dolt = DoltClient.shared
 
@@ -29,65 +30,92 @@ class AppState: ObservableObject {
   }
 
   func startPolling() {
-    refreshTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+    // Fast mail poll via DoltClient — 2s cadence, direct SQL
+    mailTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
       Task { @MainActor [weak self] in
-        await self?.refresh()
+        await self?.refreshMail()
+      }
+    }
+    // Slow full refresh — status, rigs, dolt, polecats, convoys
+    fullTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+      Task { @MainActor [weak self] in
+        await self?.refreshFull()
       }
     }
   }
 
   func stopPolling() {
-    refreshTimer?.invalidate()
-    refreshTimer = nil
+    mailTimer?.invalidate()
+    fullTimer?.invalidate()
+    mailTimer = nil
+    fullTimer = nil
   }
 
+  // Full refresh — triggered manually or on 30s timer
   func refresh() async {
     isLoading = true
     lastError = nil
 
-    // Use DoltClient for mail reads (direct SQL — fast)
-    // Use GTClient for everything else (CLI — still needed for non-mail data)
+    // Mail via DoltClient (direct SQL), everything else via CLI
     async let statusTask = client.statusJSON()
     async let rigsTask = client.rigListJSON()
-    async let mailTask: [MailItem] = {
-      do {
-        return try await dolt.fetchMail(identity: "overseer")
-      } catch {
-        // Fallback to CLI if Dolt connection fails
-        return (try? await client.mailInboxJSON(identity: "overseer")) ?? []
-      }
-    }()
     async let doltTask = client.doltStatus()
     async let polecatTask = client.polecatListJSON()
     async let convoyTask = client.convoyListJSON()
 
+    let newMail: [MailItem]
+    do {
+      newMail = try await dolt.fetchMail(identity: "overseer")
+    } catch {
+      newMail = (try? await client.mailInboxJSON(identity: "overseer")) ?? []
+    }
+
     townStatus = try? await statusTask
     rigs = (try? await rigsTask) ?? []
-    let newMail = await mailTask
     doltStatusText = (try? await doltTask) ?? "Error fetching status"
     polecats = (try? await polecatTask) ?? []
     convoys = (try? await convoyTask) ?? []
 
-    // Detect new messages and send notifications
-    if !isFirstLoad {
-      let newIds = Set(newMail.map { $0.id })
-      let arrivals = newMail.filter { !knownMailIds.contains($0.id) && $0.isUnread }
-      for item in arrivals {
-        sendNewMailNotification(item)
-      }
-      knownMailIds = newIds
-    } else {
-      knownMailIds = Set(newMail.map { $0.id })
-      isFirstLoad = false
-    }
-
-    mailItems = newMail
-
-    // Update address cache
-    AddressCache.shared.update(from: mailItems, townStatus: townStatus)
-
+    applyNewMail(newMail)
     lastRefresh = Date()
     isLoading = false
+  }
+
+  // Lightweight mail-only refresh (2s cadence) — uses DoltClient for speed
+  private func refreshMail() async {
+    if let newMail = try? await dolt.fetchMail(identity: "overseer") {
+      applyNewMail(newMail)
+    } else if let newMail = try? await client.mailInboxJSON(identity: "overseer") {
+      applyNewMail(newMail)
+    }
+  }
+
+  // Heavy refresh without isLoading spinner (30s background cadence)
+  private func refreshFull() async {
+    async let statusTask = client.statusJSON()
+    async let rigsTask = client.rigListJSON()
+    async let doltTask = client.doltStatus()
+    async let polecatTask = client.polecatListJSON()
+    async let convoyTask = client.convoyListJSON()
+    townStatus = try? await statusTask
+    rigs = (try? await rigsTask) ?? []
+    doltStatusText = (try? await doltTask) ?? "Error fetching status"
+    polecats = (try? await polecatTask) ?? []
+    convoys = (try? await convoyTask) ?? []
+    AddressCache.shared.update(from: mailItems, townStatus: townStatus)
+  }
+
+  private func applyNewMail(_ newMail: [MailItem]) {
+    if !isFirstLoad {
+      let arrivals = newMail.filter { !knownMailIds.contains($0.id) && $0.isUnread }
+      for item in arrivals { sendNewMailNotification(item) }
+    } else {
+      isFirstLoad = false
+    }
+    knownMailIds = Set(newMail.map { $0.id })
+    mailItems = newMail
+    AddressCache.shared.update(from: mailItems, townStatus: townStatus)
+    lastRefresh = Date()
   }
 
   // MARK: - Notifications

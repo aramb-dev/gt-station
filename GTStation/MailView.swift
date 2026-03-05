@@ -41,6 +41,7 @@ struct MailView: View {
   @State private var selectedMessageId: String? = nil
   @State private var selectedContent: String = ""
   @State private var isLoadingContent: Bool = false
+  @State private var bodyCache: [String: String] = [:]  // id → stripped body
   @State private var showCompose: Bool = false
   @State private var replyContext: ReplyContext? = nil
   @State private var actionFeedback: String? = nil
@@ -130,6 +131,10 @@ struct MailView: View {
            let first = thread.messages.first {
           selectedMessageId = first.id
           Task { await loadMailContent(id: first.id) }
+          // Pre-warm remaining messages in thread concurrently
+          for msg in thread.messages.dropFirst() where bodyCache[msg.id] == nil {
+            Task { await loadMailContent(id: msg.id) }
+          }
         }
       }
 
@@ -200,10 +205,17 @@ struct MailView: View {
   }
 
   private func loadMailContent(id: String) async {
+    // Serve from cache instantly if already fetched
+    if let cached = bodyCache[id] {
+      selectedContent = cached
+      return
+    }
     isLoadingContent = true
     do {
       let raw = try await GTClient.shared.mailRead(id)
-      selectedContent = stripMailHeaders(raw)
+      let body = stripMailHeaders(raw)
+      bodyCache[id] = body
+      selectedContent = body
     } catch {
       selectedContent = "Error: \(error.localizedDescription)"
     }
