@@ -202,7 +202,8 @@ struct MailView: View {
   private func loadMailContent(id: String) async {
     isLoadingContent = true
     do {
-      selectedContent = try await GTClient.shared.mailRead(id)
+      let raw = try await GTClient.shared.mailRead(id)
+      selectedContent = stripMailHeaders(raw)
     } catch {
       selectedContent = "Error: \(error.localizedDescription)"
     }
@@ -246,7 +247,7 @@ struct ThreadListRow: View {
 
       VStack(alignment: .leading, spacing: 3) {
         HStack {
-          Text(thread.participants.joined(separator: ", "))
+          Text(thread.participants.map { ContactStore.shared.resolveDisplayName(for: $0) }.joined(separator: ", "))
             .font(.callout)
             .fontWeight(thread.hasUnread ? .semibold : .regular)
             .lineLimit(1)
@@ -397,11 +398,11 @@ struct ThreadMessageRow: View {
 
           VStack(alignment: .leading, spacing: 1) {
             HStack {
-              Text(message.from ?? "unknown")
+              Text(ContactStore.shared.resolveDisplayName(for: message.from ?? "unknown"))
                 .font(.callout)
                 .fontWeight(message.isUnread ? .semibold : .medium)
               if let to = message.to {
-                Text("to \(to)")
+                Text("to \(ContactStore.shared.resolveDisplayName(for: to))")
                   .font(.caption2)
                   .foregroundStyle(.tertiary)
               }
@@ -443,8 +444,8 @@ struct ThreadMessageRow: View {
             .padding(.vertical, 12)
           } else if let content {
             Text(content)
-              .font(.system(.body, design: .monospaced))
-              .lineSpacing(4)
+              .font(.system(.body))
+              .lineSpacing(5)
               .frame(maxWidth: .infinity, alignment: .leading)
               .padding(.horizontal, 56)
               .padding(.vertical, 12)
@@ -471,11 +472,6 @@ struct ThreadMessageRow: View {
               }
 
               Spacer()
-
-              Text(message.id)
-                .font(.caption2)
-                .foregroundStyle(.quaternary)
-                .textSelection(.enabled)
             }
             .padding(.horizontal, 56)
             .padding(.bottom, 12)
@@ -681,4 +677,32 @@ func colorForSender(_ name: String) -> Color {
   case let n where n.contains("mayor"): return .indigo
   default: return .blue
   }
+}
+
+/// Strip technical headers from `gt mail read` output.
+/// Headers may appear in multiple blocks separated by blank lines.
+/// Body starts after the last header line.
+func stripMailHeaders(_ raw: String) -> String {
+  let lines = raw.split(separator: "\n", omittingEmptySubsequences: false)
+  let headerPrefixes = ["Subject:", "From:", "To:", "Date:", "ID:", "Thread:", "Reply-To:", "CC:", "Priority:", "Type:"]
+
+  // Find the last line that is a known header
+  var lastHeaderLine = -1
+  for (i, line) in lines.enumerated() {
+    let trimmed = line.trimmingCharacters(in: .whitespaces)
+    if headerPrefixes.contains(where: { trimmed.hasPrefix($0) }) {
+      lastHeaderLine = i
+    }
+  }
+
+  if lastHeaderLine < 0 { return raw }
+
+  // Skip blank lines after the last header to find body start
+  var bodyStart = lastHeaderLine + 1
+  while bodyStart < lines.count && lines[bodyStart].trimmingCharacters(in: .whitespaces).isEmpty {
+    bodyStart += 1
+  }
+
+  if bodyStart >= lines.count { return raw }
+  return lines[bodyStart...].joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
 }
