@@ -3,31 +3,136 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GT Station — Gas Town Command Dashboard</title>
+  <title>Gas Station — Command Dashboard for Gas Town</title>
   <meta name="description" content="A native macOS dashboard for monitoring and managing your Gas Town distributed system.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --border: #1e1e2e;
-      --text: #e4e4ef;
-      --muted: #8888a0;
-      --accent: #6366f1;
-      --accent-glow: rgba(99, 102, 241, 0.15);
-      --green: #22c55e;
-      --amber: #f59e0b;
+      --bg: #08080a;
+      --surface: #0f0f13;
+      --surface-raised: #161619;
+      --border: #1c1c22;
+      --border-hover: #2a2a34;
+      --text: #f0ece4;
+      --text-dim: #a09a8c;
+      --neon: #f59a0b;
+      --neon-bright: #fbbf24;
+      --neon-glow: rgba(245, 154, 11, 0.12);
+      --neon-glow-strong: rgba(245, 154, 11, 0.25);
+      --teal: #2dd4bf;
+      --teal-dim: rgba(45, 212, 191, 0.15);
+      --red: #ef4444;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+      font-family: "Outfit", sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
+    /* Grain overlay */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ---- NAV ---- */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(16px) saturate(1.4);
+      background: rgba(8, 8, 10, 0.7);
+      border-bottom: 1px solid var(--border);
+      animation: fadeDown 0.8s ease both;
+    }
+
+    .nav-brand {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--neon);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .nav-brand .pump {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--neon);
+      border-radius: 3px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .nav-brand .pump::after {
+      content: "";
+      position: absolute;
+      top: -6px;
+      right: 2px;
+      width: 6px;
+      height: 6px;
+      border-top: 2px solid var(--neon);
+      border-right: 2px solid var(--neon);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-links a {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-links .nav-cta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.78rem;
+      padding: 0.5rem 1.1rem;
+      border: 1px solid var(--neon);
+      color: var(--neon);
+      border-radius: 6px;
+      transition: all 0.25s;
+    }
+
+    .nav-links .nav-cta:hover {
+      background: var(--neon);
+      color: var(--bg);
+    }
+
+    /* ---- HERO ---- */
     .hero {
       min-height: 100vh;
       display: flex;
@@ -35,168 +140,282 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 2rem;
+      padding: 6rem 2rem 4rem;
       position: relative;
-      overflow: hidden;
     }
 
+    /* Ambient glow */
     .hero::before {
       content: "";
       position: absolute;
-      top: -40%;
+      top: -20%;
       left: 50%;
       transform: translateX(-50%);
-      width: 800px;
-      height: 800px;
-      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      width: 900px;
+      height: 700px;
+      background: radial-gradient(ellipse at center, var(--neon-glow) 0%, transparent 60%);
       pointer-events: none;
+      animation: pulse 6s ease-in-out infinite alternate;
     }
 
-    .badge {
+    /* Horizontal line accent */
+    .hero::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .hero-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.35rem 1rem;
+      gap: 0.6rem;
+      padding: 0.4rem 1.2rem;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: var(--surface);
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-bottom: 2rem;
-    }
-
-    .badge .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-    }
-
-    h1 {
-      font-size: clamp(2.5rem, 6vw, 4.5rem);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      margin-bottom: 1.25rem;
-    }
-
-    h1 span {
-      background: linear-gradient(135deg, var(--accent), #a78bfa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .subtitle {
-      font-size: 1.15rem;
-      color: var(--muted);
-      max-width: 560px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.72rem;
+      color: var(--text-dim);
       margin-bottom: 2.5rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      animation: fadeUp 0.7s 0.2s ease both;
     }
 
-    .actions {
+    .hero-badge .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 8px var(--teal);
+      animation: dotPulse 2s ease-in-out infinite;
+    }
+
+    .hero-title {
+      font-size: clamp(3.5rem, 9vw, 7.5rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+      margin-bottom: 1.5rem;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.7s 0.35s ease both;
+    }
+
+    .hero-title .gas {
+      display: block;
+      color: var(--text);
+    }
+
+    .hero-title .station {
+      display: block;
+      color: transparent;
+      -webkit-text-stroke: 2px var(--neon);
+      filter: drop-shadow(0 0 30px var(--neon-glow-strong));
+      position: relative;
+    }
+
+    .hero-sub {
+      font-size: 1.15rem;
+      color: var(--text-dim);
+      max-width: 520px;
+      font-weight: 300;
+      line-height: 1.7;
+      margin-bottom: 3rem;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.7s 0.5s ease both;
+    }
+
+    .hero-actions {
       display: flex;
       gap: 1rem;
       flex-wrap: wrap;
       justify-content: center;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.7s 0.65s ease both;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      font-weight: 500;
+      gap: 0.6rem;
+      padding: 0.85rem 1.75rem;
+      border-radius: 8px;
+      font-family: "Outfit", sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
       text-decoration: none;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
       border: none;
+      letter-spacing: 0.01em;
     }
 
     .btn-primary {
-      background: var(--accent);
-      color: #fff;
+      background: var(--neon);
+      color: var(--bg);
+      box-shadow: 0 0 24px var(--neon-glow-strong), inset 0 1px 0 rgba(255,255,255,0.15);
     }
 
     .btn-primary:hover {
-      filter: brightness(1.15);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px var(--neon-glow-strong), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
     }
 
-    .btn-secondary {
-      background: var(--surface);
+    .btn-ghost {
+      background: transparent;
       color: var(--text);
       border: 1px solid var(--border);
     }
 
-    .btn-secondary:hover {
-      border-color: var(--accent);
-      background: var(--accent-glow);
+    .btn-ghost:hover {
+      border-color: var(--neon);
+      color: var(--neon);
+      transform: translateY(-2px);
     }
 
+    /* ---- FEATURES ---- */
     .features {
-      padding: 6rem 2rem;
-      max-width: 1100px;
+      padding: 8rem 2rem;
+      max-width: 1200px;
       margin: 0 auto;
+      position: relative;
     }
 
-    .features h2 {
+    .section-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.72rem;
+      color: var(--neon);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
       text-align: center;
-      font-size: 2rem;
-      margin-bottom: 3rem;
-      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+
+    .section-desc {
+      text-align: center;
+      color: var(--text-dim);
+      max-width: 480px;
+      margin: 0 auto 4rem;
+      font-weight: 300;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
     }
 
     .card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.75rem;
-      transition: border-color 0.2s;
+      padding: 2.25rem;
+      position: relative;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--neon-glow) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.35s;
+    }
+
+    .card:hover::before {
+      opacity: 1;
     }
 
     .card:hover {
-      border-color: #2e2e4e;
+      background: var(--surface-raised);
+    }
+
+    .card-number {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+      opacity: 0.5;
+      position: relative;
+      z-index: 1;
     }
 
     .card-icon {
-      font-size: 1.5rem;
-      margin-bottom: 0.75rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      font-size: 1.2rem;
+      position: relative;
+      z-index: 1;
     }
 
+    .card-icon.mail { background: rgba(245, 154, 11, 0.1); border: 1px solid rgba(245, 154, 11, 0.2); }
+    .card-icon.nudge { background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.2); }
+    .card-icon.rig { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); }
+    .card-icon.dolt { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); }
+    .card-icon.contacts { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); }
+    .card-icon.escalation { background: rgba(245, 154, 11, 0.1); border: 1px solid rgba(245, 154, 11, 0.2); }
+
     .card h3 {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
+      font-weight: 600;
       margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
     }
 
     .card p {
-      font-size: 0.9rem;
-      color: var(--muted);
-      line-height: 1.5;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      font-weight: 300;
+      position: relative;
+      z-index: 1;
     }
 
+    /* ---- TECH STACK ---- */
     .tech {
-      padding: 4rem 2rem 6rem;
+      padding: 6rem 2rem 8rem;
       text-align: center;
+      position: relative;
     }
 
-    .tech h2 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      letter-spacing: -0.02em;
-    }
-
-    .tech p {
-      color: var(--muted);
-      max-width: 600px;
-      margin: 0 auto 2.5rem;
+    .tech::before {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, var(--neon-glow) 0%, transparent 70%);
+      pointer-events: none;
     }
 
     .tags {
@@ -204,110 +423,284 @@
       gap: 0.75rem;
       flex-wrap: wrap;
       justify-content: center;
+      max-width: 700px;
+      margin: 0 auto;
     }
 
     .tag {
-      padding: 0.4rem 1rem;
+      font-family: "JetBrains Mono", monospace;
+      padding: 0.55rem 1.15rem;
       border-radius: 8px;
       background: var(--surface);
       border: 1px solid var(--border);
-      font-size: 0.85rem;
-      color: var(--muted);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      letter-spacing: 0.02em;
+      transition: all 0.25s;
     }
 
+    .tag:hover {
+      border-color: var(--neon);
+      color: var(--neon);
+    }
+
+    /* ---- INSTALL BANNER ---- */
+    .install {
+      max-width: 800px;
+      margin: 0 auto 6rem;
+      padding: 0 2rem;
+    }
+
+    .install-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .install-box::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon), transparent);
+    }
+
+    .install-box h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.02em;
+    }
+
+    .install-box p {
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+      font-weight: 300;
+    }
+
+    .install-cmd {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1.5rem;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.85rem;
+      color: var(--teal);
+    }
+
+    .install-cmd .prompt {
+      color: var(--text-dim);
+      user-select: none;
+    }
+
+    /* ---- FOOTER ---- */
     footer {
       text-align: center;
-      padding: 2rem;
-      color: var(--muted);
+      padding: 2.5rem 2rem;
+      color: var(--text-dim);
       font-size: 0.8rem;
       border-top: 1px solid var(--border);
     }
 
     footer a {
-      color: var(--accent);
+      color: var(--neon);
       text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    footer a:hover {
+      opacity: 0.8;
+    }
+
+    /* ---- ANIMATIONS ---- */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      from { opacity: 0.6; }
+      to { opacity: 1; }
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Scroll-triggered reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 640px) {
-      .features { padding: 4rem 1.25rem; }
+      nav { padding: 1rem 1.25rem; }
+      .nav-links { gap: 1rem; }
+      .nav-links a:not(.nav-cta) { display: none; }
+      .features { padding: 5rem 1.25rem; }
       .grid { grid-template-columns: 1fr; }
+      .hero-title { letter-spacing: -0.03em; }
+      .install-box { padding: 2rem 1.5rem; }
+      .install-cmd { font-size: 0.75rem; padding: 0.7rem 1rem; }
     }
   </style>
 </head>
 <body>
 
-  <section class="hero">
-    <div class="badge">
-      <span class="dot"></span>
-      macOS Native App
+  <nav>
+    <a href="#" class="nav-brand">
+      <span class="pump"></span>
+      Gas Station
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#stack">Stack</a>
+      <a href="https://github.com/aramb-dev/gt-station" class="nav-cta">GitHub</a>
     </div>
-    <h1>GT <span>Station</span></h1>
-    <p class="subtitle">
-      A native macOS command dashboard for monitoring and managing your Gas Town distributed system — mail, rigs, nudges, and more.
+  </nav>
+
+  <section class="hero">
+    <div class="hero-badge">
+      <span class="pulse-dot"></span>
+      macOS Native &middot; SwiftUI
+    </div>
+    <h1 class="hero-title">
+      <span class="gas">Gas</span>
+      <span class="station">Station</span>
+    </h1>
+    <p class="hero-sub">
+      The command dashboard for Gas Town. Monitor rigs, manage mail, send nudges, and keep your distributed system running from one native macOS app.
     </p>
-    <div class="actions">
+    <div class="hero-actions">
       <a href="https://github.com/aramb-dev/gt-station" class="btn btn-primary">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-        View on GitHub
+        View Source
       </a>
-      <a href="https://github.com/aramb-dev/gt-station/releases" class="btn btn-secondary">
+      <a href="https://github.com/aramb-dev/gt-station/releases" class="btn btn-ghost">
         Download
       </a>
     </div>
   </section>
 
-  <section class="features">
-    <h2>Everything you need to run Gas Town</h2>
-    <div class="grid">
+  <section class="features" id="features">
+    <div class="reveal">
+      <p class="section-label">Capabilities</p>
+      <h2 class="section-title">Everything to run Gas Town</h2>
+      <p class="section-desc">Six integrated modules. One dashboard. Zero context switching.</p>
+    </div>
+    <div class="grid reveal reveal-delay-1">
       <div class="card">
-        <div class="card-icon">&#x2709;</div>
+        <div class="card-number">01</div>
+        <div class="card-icon mail">&#x2709;&#xFE0E;</div>
         <h3>Mail System</h3>
-        <p>Thread-grouped inbox with compose, reply, priority levels, and native macOS notifications for new messages.</p>
+        <p>Thread-grouped inbox with compose, reply, priority levels, and native macOS notifications.</p>
       </div>
       <div class="card">
-        <div class="card-icon">&#x1F4E1;</div>
+        <div class="card-number">02</div>
+        <div class="card-icon nudge">&#x1F4E1;</div>
         <h3>Nudge Messaging</h3>
-        <p>Send targeted messages to agents with immediate, scheduled, and custom delivery modes — iMessage-style interface.</p>
+        <p>Targeted agent messaging with immediate, scheduled, and custom delivery modes.</p>
       </div>
       <div class="card">
-        <div class="card-icon">&#x2699;</div>
+        <div class="card-number">03</div>
+        <div class="card-icon rig">&#x2699;&#xFE0E;</div>
         <h3>Rig Management</h3>
-        <p>Monitor rig status, start and stop infrastructure units, and manage the full rig lifecycle from one panel.</p>
+        <p>Monitor status, start and stop infrastructure units, manage the full rig lifecycle.</p>
       </div>
       <div class="card">
-        <div class="card-icon">&#x1F5C4;</div>
-        <h3>Dolt Database Health</h3>
-        <p>Direct database monitoring via MySQLNIO with real-time health metrics and status checks.</p>
+        <div class="card-number">04</div>
+        <div class="card-icon dolt">&#x1F5C4;</div>
+        <h3>Dolt Database</h3>
+        <p>Direct database monitoring via MySQLNIO with real-time health metrics and checks.</p>
       </div>
       <div class="card">
-        <div class="card-icon">&#x1F4CB;</div>
+        <div class="card-number">05</div>
+        <div class="card-icon contacts">&#x1F4CB;</div>
         <h3>Contact Directory</h3>
-        <p>Browse agents with quick-action capabilities — nudge or mail anyone directly from the contacts view.</p>
+        <p>Browse agents with quick-action capabilities — nudge or mail from the contacts view.</p>
       </div>
       <div class="card">
-        <div class="card-icon">&#x26A0;</div>
+        <div class="card-number">06</div>
+        <div class="card-icon escalation">&#x26A0;&#xFE0E;</div>
         <h3>Escalations</h3>
-        <p>Monitor critical issues and system alerts in one centralized view to stay ahead of problems.</p>
+        <p>Monitor critical issues and system alerts in one centralized view.</p>
       </div>
     </div>
   </section>
 
-  <section class="tech">
-    <h2>Built with</h2>
-    <p>Native performance and modern Swift concurrency for a responsive, reliable experience.</p>
+  <section class="tech reveal" id="stack">
+    <p class="section-label">Tech Stack</p>
+    <h2 class="section-title">Built for macOS</h2>
+    <p class="section-desc">Native performance with modern Swift concurrency.</p>
     <div class="tags">
       <span class="tag">SwiftUI</span>
-      <span class="tag">Swift Concurrency</span>
+      <span class="tag">async/await</span>
+      <span class="tag">Actors</span>
       <span class="tag">MySQLNIO</span>
       <span class="tag">Dolt</span>
-      <span class="tag">macOS Native</span>
       <span class="tag">Xcode 15.4+</span>
+      <span class="tag">macOS Native</span>
+    </div>
+  </section>
+
+  <section class="install reveal">
+    <div class="install-box">
+      <h3>Get started</h3>
+      <p>Clone the repo and build with Xcode.</p>
+      <div class="install-cmd">
+        <span class="prompt">$</span>
+        git clone https://github.com/aramb-dev/gt-station.git
+      </div>
     </div>
   </section>
 
   <footer>
-    <p>GT Station &mdash; built by <a href="https://github.com/aramb-dev">aramb-dev</a></p>
+    <p>Gas Station &mdash; built by <a href="https://github.com/aramb-dev">aramb-dev</a></p>
   </footer>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible")
+        }
+      })
+    }, { threshold: 0.15 })
+
+    document.querySelectorAll(".reveal").forEach(el => observer.observe(el))
+  </script>
 
 </body>
 </html>
