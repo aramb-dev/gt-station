@@ -3,33 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gas Station — Command Dashboard for Gas Town</title>
-  <meta name="description" content="A native macOS dashboard for monitoring and managing your Gas Town distributed system.">
+  <title>Gas Station — The Command Center for Gas Town</title>
+  <meta name="description" content="The native macOS dashboard for managing your Gas Town. Oversee the Mayor, wrangle Polecats, monitor Rigs, and keep the Convoys rolling.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #08080a;
-      --surface: #0f0f13;
-      --surface-raised: #161619;
-      --border: #1c1c22;
-      --border-hover: #2a2a34;
-      --text: #f0ece4;
-      --text-dim: #a09a8c;
-      --neon: #f59a0b;
-      --neon-bright: #fbbf24;
-      --neon-glow: rgba(245, 154, 11, 0.12);
-      --neon-glow-strong: rgba(245, 154, 11, 0.25);
-      --teal: #2dd4bf;
-      --teal-dim: rgba(45, 212, 191, 0.15);
-      --red: #ef4444;
+      --bg: #0c0a08;
+      --surface: #141210;
+      --surface-raised: #1a1816;
+      --border: #252118;
+      --border-warm: #3a3020;
+      --text: #f5efe4;
+      --text-warm: #d4c9b4;
+      --text-dim: #8a7e6a;
+      --neon: #f5a623;
+      --neon-hot: #ff8c00;
+      --neon-glow: rgba(245, 166, 35, 0.08);
+      --neon-glow-md: rgba(245, 166, 35, 0.15);
+      --neon-glow-strong: rgba(245, 166, 35, 0.3);
+      --teal: #38d9a9;
+      --red: #e8553a;
+      --purple: #b197fc;
+      --blue: #74c0fc;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: "Outfit", sans-serif;
+      font-family: "DM Sans", sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
@@ -37,15 +40,15 @@
       overflow-x: hidden;
     }
 
-    /* Grain overlay */
+    /* Grain */
     body::after {
       content: "";
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 9999;
-      opacity: 0.03;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
     /* ---- NAV ---- */
@@ -55,81 +58,61 @@
       left: 0;
       right: 0;
       z-index: 100;
-      padding: 1.25rem 2rem;
+      padding: 1rem 2.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      backdrop-filter: blur(16px) saturate(1.4);
-      background: rgba(8, 8, 10, 0.7);
+      backdrop-filter: blur(20px) saturate(1.5);
+      background: rgba(12, 10, 8, 0.8);
       border-bottom: 1px solid var(--border);
-      animation: fadeDown 0.8s ease both;
+      animation: fadeDown 0.6s ease both;
     }
 
     .nav-brand {
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 700;
-      font-size: 0.95rem;
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 1.4rem;
       color: var(--neon);
       text-decoration: none;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+      letter-spacing: 0.08em;
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.5rem;
     }
 
-    .nav-brand .pump {
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--neon);
-      border-radius: 3px;
-      position: relative;
-      display: inline-block;
-    }
-
-    .nav-brand .pump::after {
-      content: "";
-      position: absolute;
-      top: -6px;
-      right: 2px;
-      width: 6px;
-      height: 6px;
-      border-top: 2px solid var(--neon);
-      border-right: 2px solid var(--neon);
-    }
+    .nav-brand svg { flex-shrink: 0; }
 
     .nav-links {
       display: flex;
-      gap: 2rem;
+      gap: 2.25rem;
       align-items: center;
     }
 
     .nav-links a {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--text-dim);
       text-decoration: none;
-      font-weight: 400;
-      letter-spacing: 0.02em;
+      font-weight: 500;
+      letter-spacing: 0.03em;
       transition: color 0.2s;
     }
 
-    .nav-links a:hover {
-      color: var(--text);
-    }
+    .nav-links a:hover { color: var(--text); }
 
-    .nav-links .nav-cta {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.78rem;
-      padding: 0.5rem 1.1rem;
+    .nav-cta {
+      font-family: "JetBrains Mono", monospace !important;
+      font-size: 0.75rem !important;
+      padding: 0.45rem 1rem;
       border: 1px solid var(--neon);
-      color: var(--neon);
-      border-radius: 6px;
-      transition: all 0.25s;
+      color: var(--neon) !important;
+      border-radius: 5px;
+      transition: all 0.25s !important;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
-    .nav-links .nav-cta:hover {
-      background: var(--neon);
-      color: var(--bg);
+    .nav-cta:hover {
+      background: var(--neon) !important;
+      color: var(--bg) !important;
     }
 
     /* ---- HERO ---- */
@@ -140,97 +123,108 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 6rem 2rem 4rem;
+      padding: 7rem 2rem 5rem;
       position: relative;
     }
 
-    /* Ambient glow */
-    .hero::before {
-      content: "";
+    /* Road lines decoration */
+    .hero .road-line {
       position: absolute;
-      top: -20%;
+      width: 3px;
+      background: var(--border);
       left: 50%;
       transform: translateX(-50%);
-      width: 900px;
-      height: 700px;
-      background: radial-gradient(ellipse at center, var(--neon-glow) 0%, transparent 60%);
-      pointer-events: none;
-      animation: pulse 6s ease-in-out infinite alternate;
     }
+    .hero .road-line.top { top: 0; height: 80px; }
+    .hero .road-line.bottom { bottom: 0; height: 120px; }
 
-    /* Horizontal line accent */
-    .hero::after {
-      content: "";
+    /* Ambient glow */
+    .hero-glow {
       position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 500px;
+      background: radial-gradient(ellipse, var(--neon-glow-md) 0%, transparent 65%);
       pointer-events: none;
-      opacity: 0.5;
+      animation: glowPulse 5s ease-in-out infinite alternate;
     }
 
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.4rem 1.2rem;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--surface);
+    .hero-eyebrow {
       font-family: "JetBrains Mono", monospace;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--text-dim);
-      margin-bottom: 2.5rem;
-      letter-spacing: 0.06em;
       text-transform: uppercase;
-      animation: fadeUp 0.7s 0.2s ease both;
+      letter-spacing: 0.2em;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: fadeUp 0.6s 0.1s ease both;
     }
 
-    .hero-badge .pulse-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--teal);
-      box-shadow: 0 0 8px var(--teal);
-      animation: dotPulse 2s ease-in-out infinite;
+    .hero-eyebrow .line {
+      width: 30px;
+      height: 1px;
+      background: var(--border-warm);
     }
 
-    .hero-title {
-      font-size: clamp(3.5rem, 9vw, 7.5rem);
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      line-height: 0.95;
-      margin-bottom: 1.5rem;
+    .hero-sign {
       position: relative;
-      z-index: 1;
-      animation: fadeUp 0.7s 0.35s ease both;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.6s 0.25s ease both;
     }
 
-    .hero-title .gas {
-      display: block;
-      color: var(--text);
-    }
-
-    .hero-title .station {
-      display: block;
-      color: transparent;
-      -webkit-text-stroke: 2px var(--neon);
-      filter: drop-shadow(0 0 30px var(--neon-glow-strong));
+    .hero-sign h1 {
+      font-family: "Bebas Neue", sans-serif;
+      font-size: clamp(5rem, 13vw, 11rem);
+      line-height: 0.85;
+      letter-spacing: 0.04em;
+      color: var(--neon);
+      text-shadow:
+        0 0 40px var(--neon-glow-strong),
+        0 0 80px var(--neon-glow-md),
+        0 0 120px var(--neon-glow);
       position: relative;
     }
 
-    .hero-sub {
-      font-size: 1.15rem;
-      color: var(--text-dim);
-      max-width: 520px;
+    .hero-sign h1 .flicker {
+      animation: neonFlicker 4s ease-in-out infinite;
+    }
+
+    .hero-sign .underline-bar {
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--neon), transparent);
+      margin: 0.5rem auto 0;
+      width: 60%;
+      opacity: 0.6;
+    }
+
+    .hero-tagline {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.82rem;
+      color: var(--neon);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      margin-bottom: 2rem;
+      opacity: 0.7;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+
+    .hero-desc {
+      font-size: 1.1rem;
+      color: var(--text-warm);
+      max-width: 540px;
       font-weight: 300;
-      line-height: 1.7;
+      line-height: 1.75;
       margin-bottom: 3rem;
-      position: relative;
-      z-index: 1;
-      animation: fadeUp 0.7s 0.5s ease both;
+      animation: fadeUp 0.6s 0.5s ease both;
+    }
+
+    .hero-desc strong {
+      color: var(--text);
+      font-weight: 500;
     }
 
     .hero-actions {
@@ -238,42 +232,39 @@
       gap: 1rem;
       flex-wrap: wrap;
       justify-content: center;
-      position: relative;
-      z-index: 1;
-      animation: fadeUp 0.7s 0.65s ease both;
+      animation: fadeUp 0.6s 0.6s ease both;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.5rem;
       padding: 0.85rem 1.75rem;
-      border-radius: 8px;
-      font-family: "Outfit", sans-serif;
-      font-size: 0.92rem;
+      border-radius: 6px;
+      font-family: "DM Sans", sans-serif;
+      font-size: 0.9rem;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
       border: none;
-      letter-spacing: 0.01em;
     }
 
     .btn-primary {
       background: var(--neon);
       color: var(--bg);
-      box-shadow: 0 0 24px var(--neon-glow-strong), inset 0 1px 0 rgba(255,255,255,0.15);
+      box-shadow: 0 0 20px var(--neon-glow-md);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 0 40px var(--neon-glow-strong), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+      box-shadow: 0 0 40px var(--neon-glow-strong), 0 6px 24px rgba(0,0,0,0.5);
     }
 
     .btn-ghost {
       background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
+      color: var(--text-warm);
+      border: 1px solid var(--border-warm);
     }
 
     .btn-ghost:hover {
@@ -282,145 +273,187 @@
       transform: translateY(-2px);
     }
 
-    /* ---- FEATURES ---- */
-    .features {
-      padding: 8rem 2rem;
-      max-width: 1200px;
+    /* ---- CAST SECTION (the Gas Town characters) ---- */
+    .cast {
+      padding: 7rem 2rem;
+      max-width: 1100px;
       margin: 0 auto;
       position: relative;
     }
 
+    .cast::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(var(--border-warm), transparent);
+    }
+
     .section-label {
       font-family: "JetBrains Mono", monospace;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       color: var(--neon);
       text-transform: uppercase;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.18em;
       text-align: center;
       margin-bottom: 1rem;
     }
 
     .section-title {
       text-align: center;
-      font-size: clamp(1.8rem, 4vw, 2.8rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin-bottom: 1rem;
+      font-family: "Bebas Neue", sans-serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      letter-spacing: 0.04em;
+      margin-bottom: 0.75rem;
     }
 
     .section-desc {
       text-align: center;
       color: var(--text-dim);
-      max-width: 480px;
+      max-width: 500px;
       margin: 0 auto 4rem;
+      font-weight: 300;
+      font-size: 0.95rem;
+    }
+
+    .cast-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+
+    .cast-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      display: flex;
+      gap: 1.25rem;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cast-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-warm), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .cast-card:hover {
+      border-color: var(--border-warm);
+      background: var(--surface-raised);
+    }
+
+    .cast-card:hover::after { opacity: 1; }
+
+    .cast-emoji {
+      font-size: 2rem;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+
+    .cast-emoji.mayor { background: rgba(177, 151, 252, 0.1); border: 1px solid rgba(177, 151, 252, 0.15); }
+    .cast-emoji.polecat { background: rgba(245, 166, 35, 0.1); border: 1px solid rgba(245, 166, 35, 0.15); }
+    .cast-emoji.rig { background: rgba(232, 85, 58, 0.1); border: 1px solid rgba(232, 85, 58, 0.15); }
+    .cast-emoji.convoy { background: rgba(56, 217, 169, 0.1); border: 1px solid rgba(56, 217, 169, 0.15); }
+
+    .cast-info h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.15rem;
+    }
+
+    .cast-info .role {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.6rem;
+    }
+
+    .cast-info .role.purple { color: var(--purple); }
+    .cast-info .role.orange { color: var(--neon); }
+    .cast-info .role.red { color: var(--red); }
+    .cast-info .role.teal { color: var(--teal); }
+
+    .cast-info p {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.55;
       font-weight: 300;
     }
 
-    .grid {
+    /* ---- FEATURES ---- */
+    .features {
+      padding: 7rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .feat-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1px;
       background: var(--border);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 14px;
       overflow: hidden;
     }
 
-    .card {
+    .feat {
       background: var(--surface);
-      padding: 2.25rem;
+      padding: 2.25rem 2rem;
       position: relative;
-      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
+      transition: all 0.3s;
     }
 
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, var(--neon-glow) 0%, transparent 50%);
-      opacity: 0;
-      transition: opacity 0.35s;
+    .feat:hover { background: var(--surface-raised); }
+
+    .feat-num {
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 2rem;
+      color: var(--border-warm);
+      line-height: 1;
+      margin-bottom: 1rem;
     }
 
-    .card:hover::before {
-      opacity: 1;
-    }
-
-    .card:hover {
-      background: var(--surface-raised);
-    }
-
-    .card-number {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.65rem;
-      color: var(--text-dim);
-      letter-spacing: 0.1em;
-      margin-bottom: 1.5rem;
-      opacity: 0.5;
-      position: relative;
-      z-index: 1;
-    }
-
-    .card-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1.25rem;
-      font-size: 1.2rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    .card-icon.mail { background: rgba(245, 154, 11, 0.1); border: 1px solid rgba(245, 154, 11, 0.2); }
-    .card-icon.nudge { background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.2); }
-    .card-icon.rig { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); }
-    .card-icon.dolt { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); }
-    .card-icon.contacts { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); }
-    .card-icon.escalation { background: rgba(245, 154, 11, 0.1); border: 1px solid rgba(245, 154, 11, 0.2); }
-
-    .card h3 {
-      font-size: 1.05rem;
+    .feat h3 {
+      font-size: 0.95rem;
       font-weight: 600;
-      margin-bottom: 0.5rem;
-      position: relative;
-      z-index: 1;
+      margin-bottom: 0.4rem;
     }
 
-    .card p {
-      font-size: 0.88rem;
+    .feat p {
+      font-size: 0.82rem;
       color: var(--text-dim);
-      line-height: 1.6;
+      line-height: 1.55;
       font-weight: 300;
-      position: relative;
-      z-index: 1;
     }
 
-    /* ---- TECH STACK ---- */
+    /* ---- TECH ---- */
     .tech {
-      padding: 6rem 2rem 8rem;
+      padding: 5rem 2rem 7rem;
       text-align: center;
-      position: relative;
-    }
-
-    .tech::before {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
-      height: 400px;
-      background: radial-gradient(ellipse at center, var(--neon-glow) 0%, transparent 70%);
-      pointer-events: none;
     }
 
     .tags {
       display: flex;
-      gap: 0.75rem;
+      gap: 0.65rem;
       flex-wrap: wrap;
       justify-content: center;
       max-width: 700px;
@@ -429,24 +462,21 @@
 
     .tag {
       font-family: "JetBrains Mono", monospace;
-      padding: 0.55rem 1.15rem;
-      border-radius: 8px;
+      padding: 0.5rem 1.1rem;
+      border-radius: 6px;
       background: var(--surface);
       border: 1px solid var(--border);
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-dim);
       letter-spacing: 0.02em;
       transition: all 0.25s;
     }
 
-    .tag:hover {
-      border-color: var(--neon);
-      color: var(--neon);
-    }
+    .tag:hover { border-color: var(--neon); color: var(--neon); }
 
-    /* ---- INSTALL BANNER ---- */
+    /* ---- INSTALL ---- */
     .install {
-      max-width: 800px;
+      max-width: 760px;
       margin: 0 auto 6rem;
       padding: 0 2rem;
     }
@@ -454,7 +484,7 @@
     .install-box {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 3rem;
       text-align: center;
       position: relative;
@@ -467,206 +497,285 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 1px;
+      height: 2px;
       background: linear-gradient(90deg, transparent, var(--neon), transparent);
+      opacity: 0.7;
     }
 
     .install-box h3 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
-      letter-spacing: -0.02em;
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
     }
 
-    .install-box p {
+    .install-box > p {
       color: var(--text-dim);
       margin-bottom: 2rem;
       font-weight: 300;
+      font-size: 0.95rem;
     }
 
     .install-cmd {
       display: inline-flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.75rem;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.85rem 1.5rem;
+      border-radius: 8px;
+      padding: 0.8rem 1.4rem;
       font-family: "JetBrains Mono", monospace;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--teal);
+      margin-bottom: 1.5rem;
     }
 
-    .install-cmd .prompt {
+    .install-cmd .prompt { color: var(--text-dim); user-select: none; }
+
+    .install-note {
+      font-size: 0.78rem;
       color: var(--text-dim);
-      user-select: none;
+      font-weight: 300;
+    }
+
+    .install-note a {
+      color: var(--neon);
+      text-decoration: none;
     }
 
     /* ---- FOOTER ---- */
     footer {
       text-align: center;
       padding: 2.5rem 2rem;
-      color: var(--text-dim);
-      font-size: 0.8rem;
       border-top: 1px solid var(--border);
     }
 
-    footer a {
+    .footer-brand {
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 1.1rem;
       color: var(--neon);
-      text-decoration: none;
-      transition: opacity 0.2s;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+      opacity: 0.6;
     }
 
-    footer a:hover {
-      opacity: 0.8;
+    footer p {
+      font-size: 0.78rem;
+      color: var(--text-dim);
     }
+
+    footer a {
+      color: var(--text-warm);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    footer a:hover { color: var(--neon); }
 
     /* ---- ANIMATIONS ---- */
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(24px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes fadeDown {
-      from { opacity: 0; transform: translateY(-10px); }
+      from { opacity: 0; transform: translateY(-12px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes pulse {
-      from { opacity: 0.6; }
-      to { opacity: 1; }
+    @keyframes glowPulse {
+      from { opacity: 0.5; transform: translateX(-50%) scale(0.95); }
+      to { opacity: 1; transform: translateX(-50%) scale(1.05); }
     }
 
-    @keyframes dotPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.85); }
-    }
-
-    /* Scroll-triggered reveal */
-    .reveal {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .reveal.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .reveal-delay-1 { transition-delay: 0.1s; }
-    .reveal-delay-2 { transition-delay: 0.2s; }
-    .reveal-delay-3 { transition-delay: 0.3s; }
-
-    /* ---- RESPONSIVE ---- */
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
+    @keyframes neonFlicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        text-shadow:
+          0 0 40px var(--neon-glow-strong),
+          0 0 80px var(--neon-glow-md),
+          0 0 120px var(--neon-glow);
+      }
+      20%, 24%, 55% {
+        text-shadow:
+          0 0 20px var(--neon-glow),
+          0 0 40px var(--neon-glow);
       }
     }
 
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1), transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-d1 { transition-delay: 0.1s; }
+    .reveal-d2 { transition-delay: 0.2s; }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 900px) {
+      .cast-grid { grid-template-columns: 1fr; }
+      .feat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
     @media (max-width: 640px) {
-      nav { padding: 1rem 1.25rem; }
-      .nav-links { gap: 1rem; }
+      nav { padding: 0.85rem 1.25rem; }
       .nav-links a:not(.nav-cta) { display: none; }
-      .features { padding: 5rem 1.25rem; }
-      .grid { grid-template-columns: 1fr; }
-      .hero-title { letter-spacing: -0.03em; }
-      .install-box { padding: 2rem 1.5rem; }
-      .install-cmd { font-size: 0.75rem; padding: 0.7rem 1rem; }
+      .hero { padding: 6rem 1.5rem 4rem; }
+      .features, .cast { padding: 5rem 1.25rem; }
+      .feat-grid { grid-template-columns: 1fr; }
+      .cast-card { flex-direction: column; gap: 1rem; }
+      .install-box { padding: 2rem 1.25rem; }
+      .install-cmd { font-size: 0.72rem; }
     }
   </style>
 </head>
 <body>
 
+  <!-- NAV -->
   <nav>
     <a href="#" class="nav-brand">
-      <span class="pump"></span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="8" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M13 8V5a2 2 0 0 1 2-2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="19" cy="3" r="1.5" fill="currentColor"/>
+        <rect x="7" y="12" width="6" height="4" rx="1" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
       Gas Station
     </a>
     <div class="nav-links">
+      <a href="#cast">The Cast</a>
       <a href="#features">Features</a>
       <a href="#stack">Stack</a>
-      <a href="https://github.com/aramb-dev/gt-station" class="nav-cta">GitHub</a>
+      <a href="https://github.com/aramb-dev/gt-station" class="nav-cta">Source Code</a>
     </div>
   </nav>
 
+  <!-- HERO -->
   <section class="hero">
-    <div class="hero-badge">
-      <span class="pulse-dot"></span>
-      macOS Native &middot; SwiftUI
+    <div class="road-line top"></div>
+    <div class="hero-glow"></div>
+
+    <div class="hero-eyebrow">
+      <span class="line"></span>
+      macOS Native Dashboard
+      <span class="line"></span>
     </div>
-    <h1 class="hero-title">
-      <span class="gas">Gas</span>
-      <span class="station">Station</span>
-    </h1>
-    <p class="hero-sub">
-      The command dashboard for Gas Town. Monitor rigs, manage mail, send nudges, and keep your distributed system running from one native macOS app.
+
+    <div class="hero-sign">
+      <h1>GAS<br><span class="flicker">STATION</span></h1>
+      <div class="underline-bar"></div>
+    </div>
+
+    <p class="hero-tagline">The command center for Gas Town</p>
+
+    <p class="hero-desc">
+      Oversee <strong>the Mayor</strong>, wrangle <strong>Polecats</strong>, monitor <strong>Rigs</strong>, and keep the <strong>Convoys</strong> rolling &mdash; all from one native macOS dashboard.
     </p>
+
     <div class="hero-actions">
       <a href="https://github.com/aramb-dev/gt-station" class="btn btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
         View Source
       </a>
       <a href="https://github.com/aramb-dev/gt-station/releases" class="btn btn-ghost">
-        Download
+        Download Release
       </a>
     </div>
+
+    <div class="road-line bottom"></div>
   </section>
 
-  <section class="features" id="features">
-    <div class="reveal">
-      <p class="section-label">Capabilities</p>
-      <h2 class="section-title">Everything to run Gas Town</h2>
-      <p class="section-desc">Six integrated modules. One dashboard. Zero context switching.</p>
+  <!-- THE CAST -->
+  <section class="cast reveal" id="cast">
+    <p class="section-label">The Cast</p>
+    <h2 class="section-title">Meet the Townspeople</h2>
+    <p class="section-desc">Gas Town runs on characters. Gas Station gives you a window into all of them.</p>
+
+    <div class="cast-grid reveal-d1">
+      <div class="cast-card">
+        <div class="cast-emoji mayor">&#x1F3A9;</div>
+        <div class="cast-info">
+          <h3>The Mayor</h3>
+          <div class="role purple">Primary Coordinator</div>
+          <p>Your main interface to Gas Town. The Mayor orchestrates work, assigns Polecats, and keeps the town running.</p>
+        </div>
+      </div>
+      <div class="cast-card">
+        <div class="cast-emoji polecat">&#x1F9A8;</div>
+        <div class="cast-info">
+          <h3>Polecats</h3>
+          <div class="role orange">Worker Agents</div>
+          <p>Persistent worker agents with identity and memory. They do the heavy lifting across your codebases.</p>
+        </div>
+      </div>
+      <div class="cast-card">
+        <div class="cast-emoji rig">&#x1F3D7;&#xFE0F;</div>
+        <div class="cast-info">
+          <h3>Rigs</h3>
+          <div class="role red">Project Containers</div>
+          <p>Isolated project workspaces. Start, stop, dock, and undock them from the Rig management panel.</p>
+        </div>
+      </div>
+      <div class="cast-card">
+        <div class="cast-emoji convoy">&#x1F69A;</div>
+        <div class="cast-info">
+          <h3>Convoys</h3>
+          <div class="role teal">Work Tracking</div>
+          <p>Track units of work as they flow through the system. Monitor progress and completion status.</p>
+        </div>
+      </div>
     </div>
-    <div class="grid reveal reveal-delay-1">
-      <div class="card">
-        <div class="card-number">01</div>
-        <div class="card-icon mail">&#x2709;&#xFE0E;</div>
-        <h3>Mail System</h3>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features reveal" id="features">
+    <p class="section-label">Dashboard Modules</p>
+    <h2 class="section-title">Six Panels. Zero Tab Switching.</h2>
+    <p class="section-desc">Everything you need to oversee Gas Town in one native app.</p>
+
+    <div class="feat-grid reveal-d1">
+      <div class="feat">
+        <div class="feat-num">01</div>
+        <h3>&#x2709;&#xFE0E; Mail</h3>
         <p>Thread-grouped inbox with compose, reply, priority levels, and native macOS notifications.</p>
       </div>
-      <div class="card">
-        <div class="card-number">02</div>
-        <div class="card-icon nudge">&#x1F4E1;</div>
-        <h3>Nudge Messaging</h3>
-        <p>Targeted agent messaging with immediate, scheduled, and custom delivery modes.</p>
+      <div class="feat">
+        <div class="feat-num">02</div>
+        <h3>&#x1F4E1; Nudge</h3>
+        <p>iMessage-style agent messaging with immediate, scheduled, and custom delivery modes.</p>
       </div>
-      <div class="card">
-        <div class="card-number">03</div>
-        <div class="card-icon rig">&#x2699;&#xFE0E;</div>
-        <h3>Rig Management</h3>
-        <p>Monitor status, start and stop infrastructure units, manage the full rig lifecycle.</p>
+      <div class="feat">
+        <div class="feat-num">03</div>
+        <h3>&#x2699;&#xFE0E; Rigs</h3>
+        <p>Full lifecycle management. Start, stop, dock, and undock infrastructure from one panel.</p>
       </div>
-      <div class="card">
-        <div class="card-number">04</div>
-        <div class="card-icon dolt">&#x1F5C4;</div>
-        <h3>Dolt Database</h3>
-        <p>Direct database monitoring via MySQLNIO with real-time health metrics and checks.</p>
+      <div class="feat">
+        <div class="feat-num">04</div>
+        <h3>&#x1F5C4; Dolt Health</h3>
+        <p>Direct MySQLNIO monitoring with real-time health metrics and database status checks.</p>
       </div>
-      <div class="card">
-        <div class="card-number">05</div>
-        <div class="card-icon contacts">&#x1F4CB;</div>
-        <h3>Contact Directory</h3>
-        <p>Browse agents with quick-action capabilities — nudge or mail from the contacts view.</p>
+      <div class="feat">
+        <div class="feat-num">05</div>
+        <h3>&#x1F4CB; Contacts</h3>
+        <p>Agent directory with quick-action nudge and mail capabilities from the contacts view.</p>
       </div>
-      <div class="card">
-        <div class="card-number">06</div>
-        <div class="card-icon escalation">&#x26A0;&#xFE0E;</div>
-        <h3>Escalations</h3>
-        <p>Monitor critical issues and system alerts in one centralized view.</p>
+      <div class="feat">
+        <div class="feat-num">06</div>
+        <h3>&#x26A0;&#xFE0E; Escalations</h3>
+        <p>Centralized critical alerts. Stay ahead of issues before they spread across town.</p>
       </div>
     </div>
   </section>
 
+  <!-- TECH -->
   <section class="tech reveal" id="stack">
-    <p class="section-label">Tech Stack</p>
-    <h2 class="section-title">Built for macOS</h2>
-    <p class="section-desc">Native performance with modern Swift concurrency.</p>
+    <p class="section-label">Under the Hood</p>
+    <h2 class="section-title">Built Native. Runs Fast.</h2>
+    <p class="section-desc">Modern Swift concurrency with zero Electron, zero web views.</p>
     <div class="tags">
       <span class="tag">SwiftUI</span>
-      <span class="tag">async/await</span>
+      <span class="tag">async / await</span>
       <span class="tag">Actors</span>
       <span class="tag">MySQLNIO</span>
       <span class="tag">Dolt</span>
@@ -675,31 +784,32 @@
     </div>
   </section>
 
+  <!-- INSTALL -->
   <section class="install reveal">
     <div class="install-box">
-      <h3>Get started</h3>
-      <p>Clone the repo and build with Xcode.</p>
+      <h3>Pull Into the Station</h3>
+      <p>Clone the repo, open in Xcode, and build.</p>
       <div class="install-cmd">
         <span class="prompt">$</span>
         git clone https://github.com/aramb-dev/gt-station.git
       </div>
+      <p class="install-note">
+        Requires Xcode 15.4+ &middot; <a href="https://github.com/dolthub/dolt">Dolt</a> on port 3307 &middot; <code style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:0.75rem;">gt</code> CLI installed
+      </p>
     </div>
   </section>
 
+  <!-- FOOTER -->
   <footer>
-    <p>Gas Station &mdash; built by <a href="https://github.com/aramb-dev">aramb-dev</a></p>
+    <div class="footer-brand">Gas Station</div>
+    <p>The command center for <a href="https://github.com/steveyegge/gastown">Gas Town</a> &mdash; built by <a href="https://github.com/aramb-dev">aramb-dev</a></p>
   </footer>
 
   <script>
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible")
-        }
-      })
-    }, { threshold: 0.15 })
-
-    document.querySelectorAll(".reveal").forEach(el => observer.observe(el))
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible") })
+    }, { threshold: 0.12 })
+    document.querySelectorAll(".reveal").forEach(el => obs.observe(el))
   </script>
 
 </body>
